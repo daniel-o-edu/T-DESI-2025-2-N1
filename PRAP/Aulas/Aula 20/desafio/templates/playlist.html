@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Minha Playlist</title>
+    <style>
+        /* CSS básico para deixar a tabela apresentável */
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #007BFF; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .empty-state { color: #666; font-style: italic; padding: 20px; text-align: center; border: 1px dashed #ccc; margin-top: 20px;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎵 Músicas Disponíveis</h1>
+
+        {# Tratamento de Estados Vazios: Verifica se a lista tem itens #}
+        {% if musicJ|length > 0 %}
+            
+            <table>
+                {# Cabeçalho Estático #}
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Artista</th>
+                        <th>Estilo</th>
+                        <th>Arquivo</th>
+                        <th>Duração</th>
+                    </tr>
+                </thead>
+                
+                {# Corpo Dinâmico #}
+                <tbody>
+                    {# Loop utilizando o range(length) conforme solicitado no desafio #}
+                    {% for i in range(musicJ|length) %}
+                    <tr>
+                        {# Células de Dados injetando os valores via índice #}
+                        <td>{{ musicJ[i]['titulo'] }}</td>
+                        <td>{{ musicJ[i]['artista'] }}</td>
+                        <td>{{ musicJ[i]['estilo'] }}</td>
+                        <td><code>{{ musicJ[i]['fileName'] }}</code></td>
+                        <td>{{ musicJ[i]['duracao'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% else %}
+            
+            {# Mensagem exibida caso a lista musicJ esteja vazia #}
+            <div class="empty-state">
+                <p>Nenhuma música cadastrada no momento.</p>
+            </div>
+
+        {% endif %}
+    </div>
+
+</body>
+</html>
