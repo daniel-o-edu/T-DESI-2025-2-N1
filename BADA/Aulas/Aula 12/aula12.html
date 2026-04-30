@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 12 - SQL: DDL - Criação de Bancos de Dados, Tabelas e Constraints</title>
+<style>
+ body {
+ margin: 0; 
+padding: 0; 
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: #f8f9fa; 
+color: #212529;
+ display: flex; 
+flex-direction: column; 
+height: 100vh;
+ overflow: hidden;
+ }
+ .slide-container {
+ width: 90vw;
+ height: 85vh;
+ margin: auto;
+ display: flex; 
+align-items: center; 
+justify-content: center;
+ padding: 40px; 
+box-sizing: border-box; 
+position: relative;
+ }
+ .slide {
+ display: none; 
+width: 100%; 
+max-width: 1200px; 
+max-height: 80vh;
+ background: #ffffff; 
+border-radius: 12px;
+ box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+padding: 50px;
+ font-size: 26px; 
+line-height: 1.6; 
+overflow-y: auto;
+ }
+ .slide.active { 
+display: block; 
+animation: fadeIn 0.4s ease-in-out;
+ }
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ h1, h2, h3 { 
+color: #0d6efd; 
+margin-top: 0; 
+}
+ code, pre { 
+background: #e9ecef; 
+padding: 10px 15px; 
+border-radius: 8px; 
+font-family: 'Courier New', Courier, monospace; 
+display: block; 
+font-size: 22px;
+ overflow-x: auto;
+ }
+ .controls {
+ height: 90px; 
+background: #ffffff; 
+border-top: 1px solid #dee2e6;
+ display: flex; 
+justify-content: space-between; 
+align-items: center; 
+padding: 0 50px;
+ }
+ button {
+ background: #0d6efd; 
+color: white; 
+border: none; 
+padding: 15px 30px;
+ font-size: 22px; 
+border-radius: 8px; 
+cursor: pointer;
+ transition: background 0.2s;
+ }
+ button:hover {
+ background: #0b5ed7;
+ }
+ button:disabled { 
+background: #adb5bd; 
+cursor: not-allowed; 
+}
+ .progress { 
+font-size: 22px; 
+font-weight: bold; 
+color: #495057;
+ }
+ 
+/* Classes Adicionais do Prompt Avançado */
+ .slide-label { font-weight: bold; text-transform: uppercase; color: #6c757d; margin-bottom: 20px; font-size: 20px; letter-spacing: 1px; }
+ .cover-desc { font-size: 28px; }
+ .divider { border: 0; border-top: 2px solid #dee2e6; margin: 30px 0; }
+ .topics-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px; }
+ .topic-chip { background: #e9ecef; padding: 10px 20px; border-radius: 50px; font-size: 20px; }
+ .cover-meta { color: #adb5bd; font-size: 18px; }
+ 
+.callout { padding: 20px 30px; border-radius: 8px; margin: 20px 0; border-left: 8px solid; }
+ .callout-title { font-weight: bold; margin-bottom: 10px; font-size: 24px; }
+ .callout.blue { background: #cce5ff; border-color: #004085; color: #004085; }
+ .callout.green { background: #d4edda; border-color: #155724; color: #155724; }
+ .callout.red { background: #f8d7da; border-color: #721c24; color: #721c24; }
+ .callout.yellow { background: #fff3cd; border-color: #856404; color: #856404; }
+ 
+.two-col { display: flex; gap: 40px; }
+ .col-card { flex: 1; background: #f8f9fa; padding: 30px; border-radius: 8px; border: 1px solid #dee2e6; }
+ 
+.code-block { margin: 20px 0; }
+ .table-wrap { overflow-x: auto; }
+ table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+ th, td { border: 1px solid #dee2e6; padding: 15px; text-align: left; }
+ th { background: #e9ecef; color: #495057; font-weight: bold; }
+ 
+.section-header { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+ .section-num { font-size: 80px; font-weight: bold; color: #e9ecef; margin-bottom: -20px; }
+ .section-header h2 { font-size: 48px; color: #0d6efd; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+ <div class="slide-container" id="slides">
+
+ <div class="slide active">
+ <div class="slide-label">Aula 12</div>
+ <h1>SQL: DDL - Criação de Bancos de Dados, Tabelas e Constraints</h1>
+ 
+<p class="cover-desc">
+ Descrição: Utilização da Linguagem de Definição de Dados (DDL) para materializar a modelagem relacional. Vamos aprender a criar bancos de dados (CREATE DATABASE), construir tabelas estruturadas (CREATE TABLE), definir domínios (tipos de dados) e aplicar regras de negócio fundamentais por meio de restrições de integridade.
+ </p>
+ 
+<hr class="divider">
+ 
+<h3>Tópicos desta aula</h3>
+ <div class="topics-grid">
+ <div class="topic-chip">CREATE DATABASE</div>
+ <div class="topic-chip">CREATE TABLE</div>
+ <div class="topic-chip">Tipos de Dados</div>
+ <div class="topic-chip">Constraints de Integridade</div>
+ </div>
+ 
+<div class="cover-meta">
+ <span>Banco de Dados</span>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Contextualização</div>
+ <h2>Cenário Real</h2>
+ <p>Em 2021, uma grande plataforma de e-commerce brasileira enfrentou um apagão de pedidos que durou cerca de 40 minutos. O problema não foi a infraestrutura de rede, mas uma falha na arquitetura dos dados recém-implantada: informações sobre métodos de pagamento estavam entrando com formatos inconsistentes e clientes órfãos (sem cadastro prévio) conseguiam finalizar compras no sistema.</p>
+ <p>A equipe de engenharia descobriu que, durante a migração para o novo banco de dados, a linguagem que define as estruturas físicas esqueceu de implementar regras rígidas de restrição (constraints) e definições adequadas de tipos de dados.</p>
+ <p>Milhares de registros corrompidos tiveram que ser higienizados manualmente, gerando um prejuízo milionário. O que define a robustez de um sistema começa antes da inserção dos dados: começa na sua fundação estrutural.</p>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">01</div>
+ <h2>O Alicerce dos Dados: Introdução à DDL e CREATE DATABASE</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 01</div>
+ <h2>A. CONCEITO</h2>
+ <p>A DDL (Data Definition Language) é o subconjunto da linguagem SQL responsável por projetar a infraestrutura do banco de dados. Diferente da DML, que manipula a informação (insere, atualiza, deleta), a DDL não olha para o conteúdo, mas sim para o "recipiente". É por meio da DDL que criamos as tabelas, índices e visões, traduzindo o modelo Entidade-Relacionamento (que fizemos no papel) para o SGBD.</p>
+ <p>O comando inicial de qualquer projeto de software é o CREATE DATABASE. Ele diz ao motor do banco de dados para alocar espaço em disco e criar o dicionário de dados primário. Resolver esse passo de forma otimizada permite separar diferentes aplicações no mesmo servidor físico, mantendo o isolamento e a segurança do projeto.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 01</div>
+ <h2>B. VISUALIZANDO</h2>
+ <p>Imagine a construção de um condomínio residencial. O Arquiteto faz a planta baixa (Modelagem de Dados). A DDL é a construtora que levanta as paredes, separa os cômodos e instala os canos. O comando CREATE DATABASE é a compra e a demarcação do terreno. O comando CREATE TABLE (que veremos a seguir) é a construção das casas individuais. A DML (dados reais) serão os moradores que entrarão depois.</p>
+ </div>
+ 
+ <div class="slide">
+ <img src="img01.png" style="max-width: 90%; height:auto;">
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 01</div>
+ <h2>C. EXEMPLO DE CÓDIGO</h2>
+ <div class="code-block">
+<pre><code>-- Criando o banco de dados para o sistema de gestão do projeto
+CREATE DATABASE db_sa;
+
+-- Garantindo que vamos operar dentro do banco recém-criado
+USE db_sa;</code></pre>
+ </div>
+ <h2>D. EXPLICAÇÃO DO CÓDIGO</h2>
+ <ul>
+ <li><strong>CREATE DATABASE db_sa;:</strong> Esta linha aciona o compilador DDL do SGBD para reservar um espaço lógico chamado db_sa. Se este comando falhar, nenhuma tabela poderá ser criada.</li>
+ <li><strong>USE db_sa;:</strong> Este comando "aponta" nosso cursor para o terreno correto. Sem ele, o SGBD não sabe em qual banco as próximas tabelas devem ser construídas, podendo gerar erros de "No database selected".</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="callout red">
+ <div class="callout-title">E. ATENÇÃO</div>
+ <p>Um erro comum de desenvolvedores é esquecer de rodar o comando USE após o CREATE DATABASE, acabando por criar tabelas no banco de sistema padrão (como o master no SQL Server ou mysql no MySQL), poluindo o ambiente de configuração do servidor.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">02</div>
+ <h2>Levantando as Paredes: CREATE TABLE e Tipos de Dados</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 02</div>
+ <h2>A. CONCEITO</h2>
+ <p>Uma vez dentro do banco de dados, usamos o comando CREATE TABLE para construir as entidades. Cada tabela representa um assunto único do mundo real (ex: Clientes, Produtos). Durante a criação da tabela, precisamos definir as colunas (atributos) e o tipo de dado (Domínio) que cada coluna aceitará.</p>
+ <p>Os tipos de dados informam ao SGBD exatamente o que esperar: números inteiros (INT), textos longos ou curtos (VARCHAR), casas decimais (DECIMAL) ou datas (DATE). Escolher o tipo correto é fundamental para otimizar o consumo de memória, melhorar a performance das buscas e evitar que o usuário digite "abacaxi" em um campo de preço.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 02</div>
+ <h2>B. VISUALIZANDO</h2>
+ <p>Continuando com a brilhante analogia do condomínio: se o CREATE TABLE (DDL) é a construção da casa, os Tipos de Dados definem as regras e o formato de cada cômodo (colunas da tabela). Eles determinam exatamente que tipo de "mobília ou morador" (dados) pode entrar ali: se é um cômodo feito só para guardar números, textos longos, ou datas.</p>
+ <p>Tecnicamente, chamamos de Tipos de Dados SQL, e eles são obrigatórios na hora de usar a DDL para criar a estrutura do banco. Aqui está a tabela com os principais tipos utilizados na modelagem de banco de dados relacionais:</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 02</div>
+ <h2>Tipos Numéricos</h2>
+ <div class="table-wrap">
+ <table>
+ <tr>
+ <th>Tipo de Dado</th>
+ <th>Descrição</th>
+ <th>Exemplo de Uso</th>
+ </tr>
+ <tr>
+ <td>INT (ou INTEGER)</td>
+ <td>Armazena números inteiros (sem casas decimais).</td>
+ <td>Idade (Ex: 35), Quantidade de Quartos (Ex: 3).</td>
+ </tr>
+ <tr>
+ <td>DECIMAL(p.s) / NUMERIC</td>
+ <td>Números exatos com casas decimais. O p é o total de dígitos e s é a quantidade de casas após a vírgula.</td>
+ <td>Preço da casa, Saldo (Ex: DECIMAL(10,2) para 250000.50).</td>
+ </tr>
+ <tr>
+ <td>FLOAT/DOUBLE</td>
+ <td>Números com casas decimais (ponto flutuante), usados para cálculos aproximados ou científicos.</td>
+ <td>Medições, coordenadas geográficas (Ex: -26.3044).</td>
+ </tr>
+ </table>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 02</div>
+ <h2>Tipos de Texto (Strings)</h2>
+ <div class="table-wrap">
+ <table>
+ <tr>
+ <th>Tipo de Dado</th>
+ <th>Descrição</th>
+ <th>Exemplo de Uso</th>
+ </tr>
+ <tr>
+ <td>VARCHAR(n)</td>
+ <td>Texto de tamanho variável. Ocupa apenas o espaço do texto inserido, até o limite máximo de n caracteres. É o mais comum.</td>
+ <td>Nome do morador (Ex: VARCHAR(100) para 'Maria Silva').</td>
+ </tr>
+ <tr>
+ <td>CHAR(n)</td>
+ <td>Texto de tamanho fixo. Se você inserir um texto menor que n, o banco preenche o resto com espaços em branco.</td>
+ <td>Sigla de Estado (Ex: CHAR(2) para 'SC'), CPF, CEP.</td>
+ </tr>
+ <tr>
+ <td>TEXT</td>
+ <td>Usado para armazenar textos muito longos, onde você não sabe o limite exato de caracteres.</td>
+ <td>Observações, histórico do cliente, descrições longas.</td>
+ </tr>
+ </table>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 02</div>
+ <h2>Tipos de Data, Hora e Lógicos</h2>
+ <div class="table-wrap">
+ <table>
+ <tr>
+ <th>Tipo de Dado</th>
+ <th>Descrição</th>
+ <th>Exemplo de Uso</th>
+ </tr>
+ <tr>
+ <td>DATE</td>
+ <td>Armazena apenas a data (Ano, Mês e Dia).</td>
+ <td>Data de nascimento (Ex: '1990-08-15').</td>
+ </tr>
+ <tr>
+ <td>TIME</td>
+ <td>Armazena apenas a hora (Horas, Minutos, Segundos).</td>
+ <td>Horário de entrada (Ex: '08:00:00').</td>
+ </tr>
+ <tr>
+ <td>TIMESTAMP / DATETIME</td>
+ <td>Armazena a data e a hora juntas.</td>
+ <td>Data e hora exata de uma compra ou assinatura de contrato.</td>
+ </tr>
+ <tr>
+ <td>BOOLEAN (ou BOOL)</td>
+ <td>Armazena valores lógicos: Verdadeiro (TRUE) ou Falso (FALSE). Nota: Em alguns bancos como o SQL Server, usa-se o tipo BIT (1 ou 0).</td>
+ <td>Inadimplente? (TRUE ou FALSE), Ativo? (1 ou 0).</td>
+ </tr>
+ </table>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="callout blue">
+ <div class="callout-title">Dica do Construtor</div>
+ <p>Escolher o tipo de dado correto na DDL é como planejar bem a fundação da casa. Usar um VARCHAR(255) para guardar a sigla de um Estado (CHAR(2)) é como construir uma garagem para caminhões quando você só tem uma bicicleta - funciona, mas desperdiça muito espaço!</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 02</div>
+ <h2>C. EXEMPLO DE CÓDIGO</h2>
+ <div class="code-block">
+<pre><code>-- Criando a tabela de desenvolvedores do sistema
+CREATE TABLE Desenvolvedor (
+ id_dev INT,
+ nome_completo VARCHAR(100),
+ data_contratacao DATE,
+ salario_base DECIMAL(10, 2)
+);</code></pre>
+ </div>
+ </div>
+ 
+ <div class="slide">
+ <h2>D. EXPLICAÇÃO DO CÓDIGO</h2>
+ <ul>
+ <li><strong>CREATE TABLE Desenvolvedor:</strong> Define o nome da nossa entidade. Usamos o singular como boa prática.</li>
+ <li><strong>id_dev INT:</strong> Cria uma coluna de identificação numérica para cada dev.</li>
+ <li><strong>nome_completo VARCHAR(100):</strong> Limita o nome a 100 caracteres. Textos maiores serão truncados ou recusados, economizando memória.</li>
+ <li><strong>salario_base DECIMAL(10, 2):</strong> Permite salários com até 10 dígitos totais, sendo 2 reservados para os centavos (ex: 99999999.99).</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="callout yellow">
+ <div class="callout-title">E. DICA</div>
+ <p>Ao desenvolver com IAs Generativas, elas frequentemente sugerem tipos genéricos como TEXT ou FLOAT. Profissionais de banco de dados evitam FLOAT para valores monetários (pois causa arredondamentos incorretos) e sempre utilizam DECIMAL ou NUMERIC.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">03</div>
+ <h2>Regras Inegociáveis: Restrições de Integridade (Constraints)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 03</div>
+ <h2>A. CONCEITO</h2>
+ <p>No mundo real, não basta apenas definir o tipo de dado; precisamos estabelecer regras de negócio rígidas. É aqui que entram as Constraints (Restrições). Elas são os "seguranças" do nosso banco de dados. Se uma aplicação tentar inserir um dado que viole uma constraint, o SGBD barra a operação imediatamente e devolve um erro. Isso resolve o problema de dados inconsistentes gerados por falhas no código da aplicação (front-end ou back-end).</p>
+ <p>As constraints mais vitais que utilizamos são:</p>
+ <ul>
+ <li><strong>PRIMARY KEY (PK):</strong> Garante que o registro seja único e não nulo. É a "identidade" daquela linha.</li>
+ <li><strong>FOREIGN KEY (FK):</strong> Garante a integridade referencial. Uma coluna só pode receber um valor se esse valor já existir como Chave Primária em outra tabela (ex: não posso criar uma tarefa para um projeto que não existe).</li>
+ <li><strong>NOT NULL:</strong> Obriga que a coluna sempre seja preenchida.</li>
+ <li><strong>UNIQUE:</strong> Garante que não haverá valores repetidos naquela coluna (ex: CPF, E-mail).</li>
+ <li><strong>CHECK:</strong> Valida uma condição matemática ou lógica (ex: salário deve ser > 0).</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 03</div>
+ <h2>B. EXEMPLO DE CÓDIGO</h2>
+ <div class="code-block">
+<pre><code>-- Criação da tabela Projetos (Lado "Um" do relacionamento)
+CREATE TABLE Projeto (
+ id_projeto INT PRIMARY KEY,
+ nome_projeto VARCHAR(100) NOT NULL,
+ orcamento DECIMAL(10, 2) CHECK (orcamento >= 0)
+);
+
+-- Criação da tabela Tarefas (Lado "Muitos", que depende de Projetos)
+CREATE TABLE Tarefa (
+ id_tarefa INT PRIMARY KEY,
+ descricao VARCHAR(255) NOT NULL,
+ status VARCHAR(20) DEFAULT 'Pendente',
+ fk_projeto INT,
+ -- Definindo a Chave Estrangeira (Relacionamento)
+ CONSTRAINT fk_tarefa_projeto FOREIGN KEY (fk_projeto) REFERENCES Projeto(id_projeto)
+);</code></pre>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Seção 03</div>
+ <h2>C. EXPLICAÇÃO DO CÓDIGO</h2>
+ <ul>
+ <li>Na tabela <strong>Projeto</strong>, o id_projeto recebe PRIMARY KEY, tornando-se o identificador oficial. O nome_projeto é NOT NULL (todo projeto precisa ter nome) e o orcamento possui um CHECK impedindo valores negativos.</li>
+ <li>Na tabela <strong>Tarefa</strong>, usamos DEFAULT 'Pendente' para que, se a aplicação não enviar um status, o banco preencha automaticamente.</li>
+ <li>A instrução <strong>CONSTRAINT fk_tarefa_projeto FOREIGN KEY (fk_projeto) REFERENCES Projeto(id_projeto)</strong> é o coração do modelo relacional. Ela diz: "A coluna fk_projeto desta tabela só aceitará números que existam na coluna id_projeto da tabela Projeto". A nomeação explícita (fk_tarefa_projeto) facilita a manutenção futura.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="callout red">
+ <div class="callout-title">D. ATENÇÃO</div>
+ <p>A ordem de criação importa muito! Como a tabela Tarefa faz referência à tabela Projeto, você obrigatoriamente precisa executar o CREATE TABLE Projeto primeiro. Se tentar criar a tabela "filha" antes da tabela "mãe", o SGBD retornará um erro de referência inexistente. O mesmo vale na hora de deletar (DROP TABLE): apague as filhas antes das mães.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">FAQ</div>
+ <h2>Perguntas Frequentes</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">FAQ - Perguntas Frequentes</div>
+ <div class="callout blue">
+ <p><strong>Pergunta:</strong> O que acontece se eu tentar apagar (DROP) a tabela Departamento agora que Funcionario depende dela?</p>
+ <p><strong>Resposta:</strong> O SGBD vai bloquear a operação e lançar um erro de violação de chave estrangeira (Foreign Key constraint fails). Para apagar a tabela Departamento, você precisaria apagar Funcionario primeiro, ou remover a constraint que as liga.</p>
+ </div>
+ <div class="callout yellow">
+ <p><strong>Pergunta:</strong> Qual a diferença entre os tipos VARCHAR e CHAR? Quando usar qual?</p>
+ <p><strong>Resposta:</strong> O CHAR(10) sempre ocupará 10 espaços no disco, mesmo se você digitar apenas "A". O VARCHAR(10) ocupará apenas o espaço necessário para o texto digitado + 1 byte de controle. Use CHAR para dados de tamanho fixo garantido (como UF do estado, ex: 'SP', 'SC') para ganhar performance, e VARCHAR para todo o resto.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">FAQ - Perguntas Frequentes</div>
+ <div class="callout green">
+ <p><strong>Pergunta:</strong> Posso ter mais de uma PRIMARY KEY na mesma tabela?</p>
+ <p><strong>Resposta:</strong> Não. Uma tabela só pode ter uma única Chave Primária. No entanto, essa chave primária pode ser composta por mais de uma coluna (ex: PRIMARY KEY (id_pedido, id_produto) em uma tabela de itens do pedido).</p>
+ </div>
+ <div class="callout blue">
+ <p><strong>Pergunta:</strong> Esqueci de colocar uma constraint na hora de criar a tabela. Preciso dar DROP e fazer tudo de novo?</p>
+ <p><strong>Resposta:</strong> Não. Você pode usar o comando ALTER TABLE nome_da_tabela ADD CONSTRAINT... para adicionar regras a uma tabela já existente. Profissionais fazem muito isso em sistemas em produção.</p>
+ </div>
+ </div>
+ 
+ <div class="slide">
+ <div class="callout red">
+ <p><strong>Pergunta:</strong> Posso usar IA (como o ChatGPT) para gerar meus scripts DDL?</p>
+ <p><strong>Resposta:</strong> Sim, ferramentas de IA Generativa são ótimas para agilizar a escrita de scripts repetitivos. Porém, a IA não conhece o domínio do seu negócio. Ela pode sugerir tipos de dados ineficientes ou esquecer regras de CHECK específicas da sua empresa. Use como assistente para digitar rápido, mas o arquiteto validador da estrutura é você.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Resumo</div>
+ <h2>RESUMINDO</h2>
+ <ul>
+ <li><strong>DDL (Data Definition Language):</strong> Subconjunto do SQL focado na construção da infraestrutura do banco de dados (o "recipiente").</li>
+ <li><strong>CREATE DATABASE:</strong> Instancia o espaço lógico do banco de dados no servidor. Deve ser seguido do comando USE.</li>
+ <li><strong>CREATE TABLE:</strong> Define uma nova entidade/tabela. Exige o planejamento cuidadoso das colunas e seus domínios.</li>
+ <li><strong>Tipos de Dados:</strong> INT, VARCHAR, DECIMAL, DATE. Escolhas críticas que afetam performance, validação de inputs e armazenamento.</li>
+ <li><strong>PRIMARY KEY:</strong> A identificação única e irrenunciável de cada registro da tabela.</li>
+ <li><strong>FOREIGN KEY:</strong> A restrição que garante os relacionamentos. Impede dados órfãos e exige ordem correta de criação das tabelas.</li>
+ <li><strong>Constraints (Regras de Negócio):</strong> NOT NULL, UNIQUE, CHECK. Movem a responsabilidade pela integridade dos dados da aplicação para a fundação do SGBD.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">04</div>
+ <h2>MÃO NA MASSA</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Mão na Massa</div>
+ <h2>Contexto</h2>
+ <p>Sua equipe foi contratada para desenvolver o banco de dados principal de um Sistema de Gestão de Tarefas Corporativas. O líder técnico repassou o diagrama de Entidade-Relacionamento e agora cabe a nós traduzir isso em código SQL (DDL). O foco aqui é trabalhar em dupla: a comunicação clara com seu colega é essencial para evitar erros de sintaxe e concordância dos nomes das tabelas.</p>
+ <h2>Enunciado</h2>
+ <p>Vamos construir a estrutura inicial do banco, criando o banco de dados, a entidade de Departamentos e a entidade de Funcionários, garantindo a integridade referencial entre elas.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Mão na Massa - Tutorial Passo a Passo</div>
+ <h3>Passo 1: Fundação do Sistema</h3>
+ <p>Crie o banco de dados (db_gestao_corp) e coloque-o em uso.</p>
+ <ul>
+ <li><strong>Verificação:</strong> Olhe na aba "Schemas" do MySQL Workbench (ou equivalente) e veja se o banco db_gestao_corp aparece em negrito.</li>
+ </ul>
+ <h3>Passo 2: Criando a Tabela Independente (Domínio)</h3>
+ <p>Vamos criar a tabela de Departamentos primeiro, pois ela não depende de ninguém. Utilize os seguintes dados:</p>
+ <ul>
+ <li><strong>Tabela:</strong> Departamento</li>
+ <li><strong>Atributos:</strong> id_depto (PK) e nome_depto</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Mão na Massa - Tutorial Passo a Passo</div>
+ <h3>Passo 3: Criando a Tabela Dependente com Relacionamento</h3>
+ <p>Agora, criamos a tabela de Funcionários. Cada funcionário deve pertencer a um departamento válido. Utilize os dados:</p>
+ <ul>
+ <li><strong>Tabela:</strong> Funcionario</li>
+ <li><strong>Atributos:</strong> matricula (PK), nome, data_admissao, salario (Checando o salário mínimo) e fk_depto.</li>
+ <li><strong>Restrições:</strong> fk_func_depto<br>Chave Estrangeira: fk_depto<br>Referência: Departamento(id_depto)</li>
+ </ul>
+ </div>
+ 
+ <div class="slide">
+ <h3>Passo 4: Validação Estrutural</h3>
+ <p>Execute o comando abaixo para visualizar se a tabela foi criada com a estrutura correta.</p>
+ <div class="code-block">
+<pre><code>DESCRIBE Funcionario;</code></pre>
+ </div>
+ <p><strong>Resultado Esperado:</strong> Ao final, você terá o banco db_gestao_corp instanciado, contendo duas tabelas interligadas. Ao rodar o DESCRIBE, ele deve conseguir identificar claramente as colunas marcadas como PRI (Primary) e MUL (Foreign Key), confirmando que a arquitetura está pronta para receber dados reais com segurança.</p>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>FECHAMENTO</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Fechamento</div>
+ <h2>Conexão com a SA:</h2>
+ <p>Independentemente de qual seja o tema do projeto da sua equipe - seja um sistema de saúde escolar, um controle de ponto ou uma plataforma de adoção de animais o conteúdo de hoje é o alicerce técnico do software de vocês. As tabelas que vocês acabaram de modelar no "Mão na Massa" serão as mesmas tabelas que o back-end tentará se conectar nas próximas fases do curso. Se a DDL falhar, a aplicação inteira desmorona. Garantir a criação das Constraints agora significa menos bugs e madrugadas em claro no dia da entrega final da SA.</p>
+ </div>
+ 
+ <div class="slide">
+ <h2>Próxima Aula:</h2>
+ <p>Hoje nós construímos a estrutura, levantamos as paredes do prédio e colocamos portas com fechaduras seguras. Porém, nosso prédio está vazio. Na próxima aula (Aula 13), vamos dar vida a este ambiente utilizando a DML (Data Manipulation Language). Vamos aprender a povoar as tabelas (INSERT), atualizar informações erradas (UPDATE) e limpar o que não serve mais (DELETE).</p>
+ <div class="callout blue">
+ <p>Antes de virem para a aula, pensem no seguinte: Se a DDL protegeu os dados para que apenas informações válidas entrem... o que acontece se o próprio Desenvolvedor rodar um comando de alteração de dados sem filtro, afetando o banco inteiro de uma vez só? Preparem-se para conhecer o maior pesadelo dos devs desatentos.</p>
+ </div>
+ </div>
+
+ </div>
+
+ <div class="controls">
+ <button id="prevBtn" onclick="prevSlide()" disabled>Anterior</button>
+ <div class="progress"><span id="current">1</span> / <span id="total"></span></div>
+ <button id="nextBtn" onclick="nextSlide()">Próximo</button>
+ </div>
+
+ <script>
+ let currentSlideIndex = 0;
+ const slides = document.querySelectorAll('.slide');
+ const totalSlides = slides.length;
+ const currentIndicator = document.getElementById('current');
+ const totalIndicator = document.getElementById('total');
+ const prevBtn = document.getElementById('prevBtn');
+ const nextBtn = document.getElementById('nextBtn');
+
+ totalIndicator.textContent = totalSlides;
+
+ function updateView() {
+ slides.forEach((slide, index) => {
+ slide.classList.remove('active');
+ if (index === currentSlideIndex) {
+ slide.classList.add('active');
+ }
+ });
+ currentIndicator.textContent = currentSlideIndex + 1;
+ 
+prevBtn.disabled = currentSlideIndex === 0;
+ nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+ }
+
+ function nextSlide() {
+ if (currentSlideIndex < totalSlides - 1) {
+ currentSlideIndex++;
+ updateView();
+ }
+ }
+
+ function prevSlide() {
+ if (currentSlideIndex > 0) {
+ currentSlideIndex--;
+ updateView();
+ }
+ }
+
+ document.addEventListener('keydown', (e) => {
+ if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+ if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+ });
+ </script>
+</body>
+</html>
