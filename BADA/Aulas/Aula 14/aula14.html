@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 14 - Consultas Complexas: Filtragem, Agrupamentos e Junções (JOINS)</title>
+<style>
+ body {
+ margin: 0; 
+ padding: 0; 
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: #f8f9fa; 
+ color: #212529;
+ display: flex; 
+ flex-direction: column; 
+ height: 100vh;
+ overflow: hidden;
+ }
+ .slide-container {
+ width: 95vw;
+ height: 85vh;
+ margin: auto;
+ display: flex; 
+ align-items: center; 
+ justify-content: center;
+ padding: 20px; 
+ box-sizing: border-box; 
+ position: relative;
+ }
+ .slide {
+ display: none; 
+ width: 100%; 
+ max-width: 1200px; 
+ height: 80vh;
+ background: #ffffff; 
+ border-radius: 12px;
+ box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+ padding: 50px;
+ font-size: 24px; 
+ line-height: 1.5; 
+ overflow-y: auto;
+ }
+ .slide.active { 
+ display: block; 
+ animation: fadeIn 0.4s ease-in-out;
+ }
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ h1, h2, h3 { 
+ color: #0d6efd; 
+ margin-top: 0; 
+ }
+ code, pre { 
+ background: #e9ecef; 
+ padding: 10px 15px; 
+ border-radius: 8px; 
+ font-family: 'Courier New', Courier, monospace; 
+ display: block; 
+ font-size: 20px;
+ overflow-x: auto;
+ white-space: pre-wrap;
+ }
+ .controls {
+ height: 80px; 
+ background: #ffffff; 
+ border-top: 1px solid #dee2e6;
+ display: flex; 
+ justify-content: space-between; 
+ align-items: center; 
+ padding: 0 50px;
+ }
+ button {
+ background: #0d6efd; 
+ color: white; 
+ border: none; 
+ padding: 12px 25px;
+ font-size: 18px; 
+ border-radius: 8px; 
+ cursor: pointer;
+ transition: background 0.2s;
+ }
+ button:hover {
+ background: #0b5ed7;
+ }
+ button:disabled { 
+ background: #adb5bd; 
+ cursor: not-allowed; 
+ }
+ .progress { 
+ font-size: 20px; 
+ font-weight: bold; 
+ color: #495057;
+ }
+ .slide-label { font-weight: bold; text-transform: uppercase; color: #6c757d; margin-bottom: 20px; font-size: 18px; letter-spacing: 1px; }
+ .callout { padding: 20px 30px; border-radius: 8px; margin: 20px 0; border-left: 8px solid; }
+ .callout.blue { background: #cce5ff; border-color: #004085; color: #004085; }
+ .callout.green { background: #d4edda; border-color: #155724; color: #155724; }
+ .callout.red { background: #f8d7da; border-color: #721c24; color: #721c24; }
+ .callout.yellow { background: #fff3cd; border-color: #856404; color: #856404; }
+ .section-header { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+ .section-num { font-size: 80px; font-weight: bold; color: #e9ecef; margin-bottom: -20px; }
+ .section-header h2 { font-size: 48px; color: #0d6efd; margin-bottom: 20px; }
+ img { max-width: 100%; height: auto; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6; }
+</style>
+</head>
+<body>
+ <div class="slide-container" id="slides">
+
+ <div class="slide active">
+ <div class="slide-label">Aula 14</div>
+ <h1>Consultas Complexas: Filtragem, Agrupamentos e Junções (JOINS)</h1>
+ <p><strong>Descrição:</strong> Domínio da instrução SELECT para extração de relatórios estratégicos e cruzamento de dados relacionais utilizando cláusulas WHERE, ORDER BY, funções de agregação, GROUP BY, HAVING e a poderosa operação de JOIN.</p>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">01</div>
+ <h2>DQL - Um caso à parte</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">DQL - Um caso à parte</div>
+ <h2>A. CONCEITO</h2>
+ <p>A Linguagem de Consulta de Dados é a parte do SQL focada em extrair e visualizar informações. É aqui que o banco de dados mostra seu verdadeiro valor: a capacidade de encontrar uma agulha no palheiro em milissegundos. O DQL não altera absolutamente nada no seu banco. Ele é como uma lanterna: você ilumina os dados para enxergá-los, mas a luz não muda a cor ou o formato do que está sendo iluminado.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">DQL - Um caso à parte</div>
+ <h3>O Comando SELECT</h3>
+ <p>O SELECT é, sem dúvida, o comando mais utilizado em todo o universo SQL. Ele funciona como um filtro inteligente que responde às suas perguntas. E como ele funciona na prática?</p>
+ <p>Imagine que você está diante do arquivo de aço da biblioteca e faz um pedido ao arquivista: "Por favor, me mostre apenas o Título e o Preço de todos os livros que custam mais de R$ 50,00."</p>
+ <p>No mundo do SQL, esse pedido "traduzido" seria:</p>
+ <ol>
+ <li>SELECT (O que eu quero ver?): Titulo, Preço</li>
+ <li>FROM (Onde isso está guardado?): LIVRO</li>
+ <li>WHERE (Qual é o critério?): Preço > 50.00</li>
+ </ol>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">DQL - Um caso à parte</div>
+ <h2>B. VISUALIZANDO</h2>
+ <div style="text-align:center;">
+ <img src="img01.png" alt="[Imagem 01 - Representação DQL]">
+ <p style="font-size:16px; color:#666;">(Ilustração do funcionamento do comando SELECT como uma lanterna de dados)</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">02</div>
+ <h2>Filtragem Refinada e Ordenação (WHERE e ORDER BY)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Filtragem e Ordenação</div>
+ <h2>A. CONCEITO</h2>
+ <p>No dia a dia, raramente queremos ver todos os dados de uma tabela. A cláusula WHERE é o nosso filtro horizontal: ela avalia cada linha da tabela e retorna apenas aquelas em que a nossa condição for verdadeira (TRUE). Ela economiza processamento do servidor e rede, enviando para o front-end apenas o necessário. Além dos operadores básicos (=, >, <), utilizamos operadores de padrão de texto como o LIKE (para buscas parciais, excelente para barras de pesquisa) e o BETWEEN (para faixas de valores, como períodos de datas ou faixas salariais).</p>
+ <p>Após filtrar, geralmente precisamos apresentar a informação de forma organizada para o usuário final. É aí que entra o ORDER BY, responsável por ordenar o Result Set (conjunto de resultados) de forma ascendente (ASC) ou descendente (DESC).</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Filtragem e Ordenação</div>
+ <h2>B. VISUALIZANDO</h2>
+ <div style="text-align:center;">
+ <img src="img02.png" alt="[Imagem 02 - Representação WHERE e ORDER BY]">
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Filtragem e Ordenação</div>
+ <h2>C. EXEMPLO DE CÓDIGO</h2>
+ <pre><code>-- Selecionamos as colunas desejadas
+SELECT nome, cargo, salario, data_contratacao
+FROM funcionarios
+-- Filtramos: Salário entre 3k e 8k E que o nome comece com a letra 'A'
+WHERE salario BETWEEN 3000.00 AND 8000.00
+AND nome LIKE 'A%'
+-- Ordenamos primeiro por cargo (alfabética) e depois por salário (maior pro menor)
+ORDER BY cargo ASC, salario DESC;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Filtragem e Ordenação</div>
+ <h2>D. EXPLICAÇÃO DO CÓDIGO</h2>
+ <ul>
+ <li><strong>SELECT e FROM:</strong> Definem o que queremos e de onde vem (projeção vertical).</li>
+ <li><strong>WHERE salario BETWEEN...:</strong> Em vez de usar salario >= 3000 AND salario <= 8000, BETWEEN deixa o código mais limpo e legível.</li>
+ <li><strong>LIKE 'A%':</strong> O curinga % significa "qualquer quantidade de caracteres". Ou seja, obrigatoriamente a string começa com 'A' e termina com qualquer coisa (ex: Ana, Alberto).</li>
+ <li><strong>ORDER BY:</strong> A ordenação tem dois níveis. Se dois funcionários têm o mesmo cargo, o sistema vai olhar para a segunda.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Filtragem e Ordenação</div>
+ <h2>E. Dica de Performance</h2>
+ <div class="callout red">
+ <div class="callout-title">Atenção ao LIKE!</div>
+ <p>Quando for usar o LIKE, evite colocar o curinga no início da string (ex: LIKE '%Silva'). Isso impede o banco de dados de usar os índices (Índices B-Tree), obrigando-o a ler a tabela inteira (Full Table Scan), o que destrói a performance do sistema.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">03</div>
+ <h2>Agregação e Agrupamento (GROUP BY e HAVING)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Agregação e Agrupamento</div>
+ <h2>A. CONCEITO</h2>
+ <p>Até agora, olhamos para as linhas individualmente. Mas o mundo dos negócios precisa de resumos e totalizadores. As Funções de Agregação (COUNT, SUM, AVG, MAX, MIN) pegam múltiplas linhas e as transformam em um único valor (ex: o total de vendas do mês).</p>
+ <p>O verdadeiro poder surge quando combinamos essas funções com o GROUP BY. Ele agrupa linhas que têm os mesmos valores em colunas específicas (ex: agrupar clientes por estado). E se precisarmos filtrar esses grupos resultantes? Usamos a cláusula HAVING. Diferente do WHERE (que filtra linhas antes de agrupar), o HAVING filtra os grupos após a agregação.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Agregação e Agrupamento</div>
+ <h2>B. VISUALIZANDO</h2>
+ <div style="text-align:center;">
+ <img src="img03.png" alt="[Imagem 03 - Agrupamento e HAVING]">
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Agregação e Agrupamento</div>
+ <h2>C. EXEMPLO DE CÓDIGO</h2>
+ <pre><code>-- Queremos saber o total gasto e a quantidade de compras por cliente
+SELECT cliente_id,
+COUNT(pedido_id) AS total_pedidos,
+SUM(valor_total) AS valor_gasto
+FROM pedidos
+-- Filtramos apenas os pedidos entregues (atuando linha a linha)
+WHERE status = 'Entregue'
+-- Agrupamos os dados por cliente
+GROUP BY cliente_id
+-- Filtramos APENAS os clientes (grupos) que gastaram mais de mil reais
+HAVING SUM(valor_total) > 1000.00;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Agregação e Agrupamento</div>
+ <h2>D. EXPLICAÇÃO DO CÓDIGO</h2>
+ <ul>
+ <li><strong>COUNT() e SUM():</strong> Estão calculando métricas em cima das linhas agrupadas. Usamos AS para criar um alias (apelido) e deixar a coluna do relatório mais apresentável.</li>
+ <li><strong>WHERE:</strong> Garantiu que pedidos cancelados ou em transporte não entrassem na soma.</li>
+ <li><strong>GROUP BY cliente_id:</strong> A regra de ouro é: se uma coluna está no SELECT e não tem função de agregação (como cliente_id), ela obrigatoriamente tem que estar no GROUP BY.</li>
+ <li><strong>HAVING:</strong> Verifica a soma de cada grupo e só exibe o grupo final se a condição for atingida.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Agregação e Agrupamento</div>
+ <h2>E. ATENÇÃO</h2>
+ <div class="callout red">
+ <div class="callout-title">Erro Clássico</div>
+ <p>Um dos erros mais clássicos de desenvolvedores júniores é tentar usar funções de agregação no WHERE (ex: WHERE SUM(valor) > 100). O banco vai estourar um erro de sintaxe. Lembre-se: WHERE é para linhas, HAVING é para agregações.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">04</div>
+ <h2>Relacionando Entidades: A Arte das Junções (JOINS)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Junções (JOINS)</div>
+ <h2>A. CONCEITO</h2>
+ <p>Na Fase de Normalização (aulas anteriores), nós separamos os dados em tabelas distintas para evitar anomalias (ex: tabela Clientes e tabela Pedidos). O JOIN é a operação que materializa o relacionamento entre essas entidades no momento da consulta, unindo as informações através de um atributo comum (geralmente ligando a Chave Primária - PK de uma tabela com a Chave Estrangeira - FK da outra).</p>
+ <p>Existem vários tipos de JOIN. O INNER JOIN é o mais comum: ele retorna apenas os registros que possuem correspondência exata em ambas as tabelas. Já os OUTER JOINS (como o LEFT JOIN) preservam os registros da tabela "da esquerda" mesmo que não encontrem correspondência na tabela "da direita", preenchendo os buracos com valores nulos (NULL).</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Junções (JOINS)</div>
+ <h2>B. VISUALIZANDO</h2>
+ <div style="text-align:center;">
+ <img src="img04.png" alt="[Imagem 04 - Diagrama de Joins]">
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Junções (JOINS)</div>
+ <h2>C. EXEMPLO DE CÓDIGO</h2>
+ <pre><code>-- Selecionando dados de tabelas diferentes usando Aliases
+SELECT c.nome_cliente,
+       c.email,
+       p.data_pedido,
+       p.valor_total
+-- Tabela "da esquerda" (Base)
+FROM clientes AS c
+-- Junção interna com a Tabela "da direita"
+INNER JOIN pedidos AS p
+-- Condição de Junção (A ponte entre elas usando PK e FK)
+ON c.cliente_id = p.cliente_id
+-- Opcional: Podemos continuar filtrando normalmente
+WHERE p.valor_total > 500.00;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Junções (JOINS)</div>
+ <h2>D. EXPLICAÇÃO DO CÓDIGO</h2>
+ <ul>
+ <li><strong>AS c e AS p:</strong> Definir apelidos (alias) para as tabelas economiza muita digitação e deixa o código limpo.</li>
+ <li><strong>SELECT c.nome_cliente:</strong> Como estamos cruzando tabelas, é uma excelente prática prefaciar o nome da coluna com o alias da tabela para evitar ambiguidade (caso ambas tabelas tivessem colunas com o mesmo nome).</li>
+ <li><strong>INNER JOIN ... ON ...:</strong> A cláusula ON é onde a mágica acontece. É aqui que dizemos ao banco: "A chave primária cliente_id da tabela cliente deve ser igual à chave estrangeira cliente_id da tabela pedidos".</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Junções (JOINS)</div>
+ <h2>E. Dica de Soft Skill & Negócio</h2>
+ <div class="callout blue">
+ <p>A escolha entre INNER JOIN e LEFT JOIN nunca é apenas técnica; é uma decisão de negócio. Se o Product Manager (PM) pede um "Relatório de Vendas", use INNER JOIN. Se ele pede um "Relatório de Clientes e suas Vendas", use LEFT JOIN para não ocultar clientes inativos e acabar mascarando os números da empresa.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">?</div>
+ <h2>FAQ - Perguntas Frequentes</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">FAQ</div>
+ <p><strong>Pergunta: Eu posso usar o WHERE e o HAVING na mesma query?</strong></p>
+ <p>Resposta: Sim, e é muito comum! O WHERE filtra os dados brutos antes do agrupamento (economizando processamento), e o HAVING atua como um filtro final depois que os cálculos matemáticos do agrupamento já foram feitos.</p>
+ <hr>
+ <p><strong>Pergunta: Na prática real, usamos mais INNER JOIN ou LEFT JOIN?</strong></p>
+ <p>Resposta: Depende do relatório, mas LEFT JOIN é criticamente útil para encontrar "inconsistências" ou "ausências" de ações. Por exemplo: "Liste todos os clientes (LEFT JOIN compras) ONDE a data da compra É NULA". Isso retorna exatamente os clientes que abandonaram a loja.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">FAQ</div>
+ <p><strong>Pergunta: Posso usar o Alias criado no SELECT dentro do WHERE?</strong></p>
+ <p>Resposta: Na maioria dos bancos relacionais (como PostgreSQL, SQL Server e MySQL), não. O banco de dados processa o WHERE antes do SELECT. Portanto, no momento de filtrar, o apelido ainda não "existe" para o servidor. Mas você pode usá-lo no ORDER BY!</p>
+ <hr>
+ <p><strong>Pergunta: Qual a diferença entre COUNT(*) e COUNT(coluna)?</strong></p>
+ <p>Resposta: O COUNT(*) conta todas as linhas do seu resultado, indiscriminadamente. Já o COUNT(nome_da_coluna) conta apenas as linhas onde essa coluna específica não é nula (NOT NULL).</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">FAQ</div>
+ <p><strong>Pergunta: Fazer muitos JOINs deixa o sistema lento?</strong></p>
+ <p>Resposta: Sim. Cruzar 10, 15 tabelas cria produtos cartesianos massivos. Por isso a importância da nossa aula anterior de Arquitetura e Modelagem. Um banco mal modelado exige muitos JOINS. Para contornar lentidão justificada, criamos Índices (INDEX) nas Chaves Estrangeiras, o que acelera a ponte absurdamente.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">RESUMINDO</div>
+ <h2>Checklist técnico da estrutura completa</h2>
+ <ul>
+ <li>[ ] <strong>SELECT / FROM:</strong> Definem quais colunas mostrar e a tabela origem principal.</li>
+ <li>[X] <strong>JOIN ... ON:</strong> Materializa relacionamentos cruzando chaves (PK e FK). INNER para interseção, LEFT para preservar a tabela base.</li>
+ <li>[x] <strong>WHERE:</strong> Filtro horizontal prévio linha a linha (LIKE, BETWEEN, >, <).</li>
+ <li>[x] <strong>GROUP BY:</strong> Aglutina registros com base em colunas de identidade, permitindo sumarizações.</li>
+ <li>[x] <strong>Funções de Agregação:</strong> Operações matemáticas em grupos (SUM, AVG, MIN, MAX, COUNT).</li>
+ <li>[x] <strong>HAVING:</strong> O "Where dos agrupamentos". Filtra apenas os resultados de agregações geradas pelo GROUP BY.</li>
+ <li>[x] <strong>ORDER BY:</strong> Entrega o result set final ao front-end ordenado visualmente.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">EXERCÍCIOS</div>
+ <h2>Prática em Aula</h2>
+ <div class="callout yellow">
+ <p>A lista de exercícios da aula será apresentada separado.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">FECHAMENTO</div>
+ <h2>Conexão com a Situação de Aprendizagem (SA)</h2>
+ <p>Esta aula impacta diretamente na Matriz da sua Avaliação Prática (SA). Vocês entregarão o sistema completo. O "Dashboard" que vocês estão programando no front-end não servirá de nada se o backend não conseguir extrair os dados organizados do banco. As queries de relatório que usarão múltiplos cruzamentos (JOINs) e estatísticas (Agregações) são os motores de inteligência de negócios do projeto de vocês. Sem o que vimos hoje, a aplicação de vocês seria apenas um formulário de cadastro, não um sistema corporativo.</p>
+ </div>
+
+ </div>
+
+ <div class="controls">
+ <button id="prevBtn" onclick="prevSlide()" disabled>Anterior</button>
+ <div class="progress"><span id="current">1</span> / <span id="total"></span></div>
+ <button id="nextBtn" onclick="nextSlide()">Próximo</button>
+ </div>
+
+ <script>
+ let currentSlideIndex = 0;
+ const slides = document.querySelectorAll('.slide');
+ const totalSlides = slides.length;
+ const currentIndicator = document.getElementById('current');
+ const totalIndicator = document.getElementById('total');
+ const prevBtn = document.getElementById('prevBtn');
+ const nextBtn = document.getElementById('nextBtn');
+
+ totalIndicator.textContent = totalSlides;
+
+ function updateView() {
+ slides.forEach((slide, index) => {
+ slide.classList.remove('active');
+ if (index === currentSlideIndex) {
+ slide.classList.add('active');
+ }
+ });
+ currentIndicator.textContent = currentSlideIndex + 1;
+ 
+ prevBtn.disabled = currentSlideIndex === 0;
+ nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+ }
+
+ function nextSlide() {
+ if (currentSlideIndex < totalSlides - 1) {
+ currentSlideIndex++;
+ updateView();
+ }
+ }
+
+ function prevSlide() {
+ if (currentSlideIndex > 0) {
+ currentSlideIndex--;
+ updateView();
+ }
+ }
+
+ document.addEventListener('keydown', (e) => {
+ if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+ if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+ });
+ </script>
+</body>
+</html>
