@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 15 - Dominando Joins e Agregações em SQL</title>
+<style>
+ body {
+ margin: 0; 
+ padding: 0; 
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: #f8f9fa; 
+ color: #212529;
+ display: flex; 
+ flex-direction: column; 
+ height: 100vh;
+ overflow: hidden;
+ }
+ .slide-container {
+ width: 95vw;
+ height: 85vh;
+ margin: auto;
+ display: flex; 
+ align-items: center; 
+ justify-content: center;
+ padding: 20px; 
+ box-sizing: border-box; 
+ position: relative;
+ }
+ .slide {
+ display: none; 
+ width: 100%; 
+ max-width: 1200px; 
+ height: 80vh;
+ background: #ffffff; 
+ border-radius: 12px;
+ box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+ padding: 50px;
+ font-size: 24px; 
+ line-height: 1.5; 
+ overflow-y: auto;
+ }
+ .slide.active { 
+ display: block; 
+ animation: fadeIn 0.4s ease-in-out;
+ }
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ h1, h2, h3, h4 { 
+ color: #0d6efd; 
+ margin-top: 0; 
+ }
+ code, pre { 
+ background: #e9ecef; 
+ padding: 10px 15px; 
+ border-radius: 8px; 
+ font-family: 'Courier New', Courier, monospace; 
+ display: block; 
+ font-size: 20px;
+ overflow-x: auto;
+ white-space: pre-wrap;
+ }
+ .controls {
+ height: 80px; 
+ background: #ffffff; 
+ border-top: 1px solid #dee2e6;
+ display: flex; 
+ justify-content: space-between; 
+ align-items: center; 
+ padding: 0 50px;
+ }
+ button {
+ background: #0d6efd; 
+ color: white; 
+ border: none; 
+ padding: 12px 25px;
+ font-size: 18px; 
+ border-radius: 8px; 
+ cursor: pointer;
+ transition: background 0.2s;
+ }
+ button:hover {
+ background: #0b5ed7;
+ }
+ button:disabled { 
+ background: #adb5bd; 
+ cursor: not-allowed; 
+ }
+ .progress { 
+ font-size: 20px; 
+ font-weight: bold; 
+ color: #495057;
+ }
+ .slide-label { font-weight: bold; text-transform: uppercase; color: #6c757d; margin-bottom: 20px; font-size: 18px; letter-spacing: 1px; }
+ .callout { padding: 20px 30px; border-radius: 8px; margin: 20px 0; border-left: 8px solid; }
+ .callout.blue { background: #cce5ff; border-color: #004085; color: #004085; }
+ .callout.green { background: #d4edda; border-color: #155724; color: #155724; }
+ .callout.red { background: #f8d7da; border-color: #721c24; color: #721c24; }
+ .callout.yellow { background: #fff3cd; border-color: #856404; color: #856404; }
+ .section-header { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+ .section-num { font-size: 80px; font-weight: bold; color: #e9ecef; margin-bottom: -20px; }
+ .section-header h2 { font-size: 48px; color: #0d6efd; margin-bottom: 20px; }
+ img { max-width: 100%; height: auto; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6; }
+</style>
+</head>
+<body>
+ <div class="slide-container" id="slides">
+
+ <div class="slide active">
+ <div class="slide-label">Aula 15</div>
+ <h1>Dominando Joins e Agregações em SQL</h1>
+ <p><strong>Descrição:</strong> Capacitar os alunos a entender e construir consultas complexas cruzando múltiplas tabelas, lidando com dados incompletos (nulos) e extraindo métricas sumarizadas usando a ordem correta de execução do SQL.</p>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">01</div>
+ <h2>O Universo dos Joins (Junções)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h2>1. O Universo dos Joins (Junções)</h2>
+ <p>Neste primeiro momento, o foco é entender como o banco de dados conecta informações espalhadas. Antes de qualquer código, você precisa entender a arquitetura.</p>
+ 
+ <h3>1.1 Fundamentos de Relacionamento</h3>
+ <p>As junções cruzam informações baseadas em Chaves Primárias (PK) e Chaves Estrangeiras (FK). Na modelagem, dividimos os dados em:</p>
+ <ul>
+ <li><strong>Tabela Dimensão:</strong> Contém características estáticas (ex: nome do departamento, dados do cliente), em que as chaves primárias não se repetem.</li>
+ <li><strong>Tabela Fato:</strong> Registra eventos (ex: vendas, realizações de cursos), e utiliza chaves estrangeiras para referenciar as dimensões.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>1.2 O Produto Cartesiano e a Condição de Junção</h3>
+ <p>Para explicar o Produto Cartesiano e a Condição de Junção, vamos usar uma analogia do dia a dia: o cruzamento de peças de roupa.</p>
+ 
+ <h4>O que é o Produto Cartesiano? (A "Explosão" de Dados)</h4>
+ <p>Imagine que você tem duas listas (tabelas):</p>
+ <ul>
+ <li>Tabela A (Cores de Camisas): [Azul, Branco]</li>
+ <li>Tabela B (Tipos de Calças): [Jeans, Moletom, Social]</li>
+ </ul>
+ <p>Se você pedir ao SQL para unir essas tabelas sem dar nenhuma instrução de como elas se combinam (<code>SELECT * FROM Camisas, Calças</code>), o banco de dados fará o Produto Cartesiano. Ele vai criar todas as combinações possíveis, mesmo as que não fazem sentido.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <p>O resultado seria:</p>
+ <ol>
+ <li>Azul com Jeans</li>
+ <li>Azul com Moletom</li>
+ <li>Azul com Social</li>
+ <li>Branco com Jeans</li>
+ <li>Branco com Moletom</li>
+ <li>Branco com Social</li>
+ </ol>
+ <div class="callout red">
+ <p>Por que isso é perigoso? Se você tem uma tabela de 1.000 instrutores e outra de 1.000 cursos, o produto cartesiano geraria 1.000.000 de linhas (1.000x1.000). A maioria dessas linhas diria que o "Professor de Matemática ministra o curso de Culinária", o que é um dado falso e inútil.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>A Condição de Junção (O "Filtro Inteligente")</h3>
+ <p>Para que essa "explosão" de dados se torne uma informação útil, precisamos de um critério de correspondência. É aqui que entram as Chaves Primárias (PK) e Estrangeiras (FK). Voltando ao exemplo (instrutor e ministra):</p>
+ <ul>
+ <li>Cada instrutor tem um ID único.</li>
+ <li>A tabela ministra também tem uma coluna ID, indicando quem deu aquela aula.</li>
+ </ul>
+ <p>A Condição de Junção diz ao SQL: "Só me mostre as linhas onde o ID do instrutor na Lista A seja exatamente igual ao ID que aparece na Lista B".</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>Na prática (Sintaxe SQL):</h3>
+ <p><strong>Forma Antiga (usando WHERE):</strong></p>
+ <pre><code>SELECT nome, id_curso
+FROM instrutor, ministra
+WHERE instrutor.ID = ministra.ID;</code></pre>
+ <p>Aqui, o SQL primeiro "imagina" o produto cartesiano gigante e depois o WHERE atua como uma tesoura, cortando todas as combinações onde os IDs não batem.</p>
+</div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <p><strong>Forma Moderna (usando JOIN ON):</strong></p>
+ <pre><code>SELECT nome, id_curso
+FROM instrutor
+JOIN ministra ON instrutor.ID = ministra.ID;</code></pre>
+ <p>Esta forma é mais legível e eficiente, pois deixa claro que a união só existe por causa daquela condição específica.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>1.3 Tipos de Junções</h3>
+ <p>Existem diferentes comportamentos ao juntarmos as tabelas:</p>
+ <ul>
+ <li><strong>INNER JOIN (ou apenas JOIN):</strong> O "filtro rigoroso" que retorna apenas as tuplas onde há correspondência exata em ambas as tabelas.</li>
+ <li><strong>LEFT (OUTER) JOIN:</strong> Retorna todas as linhas da tabela à esquerda, mesmo que não haja correspondência na direita (preenchendo esses vazios com NULL).</li>
+ <li><strong>RIGHT (OUTER) JOIN:</strong> Oposto do Left Join; prioriza e preserva todas as tuplas da relação à direita.</li>
+ <li><strong>FULL (OUTER) JOIN:</strong> Combina o Left e o Right; traz tudo de ambas as tabelas, inserindo nulos onde não houver o par.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>1.4 Sintaxe de Junção: ON, USING e NATURAL JOIN</h3>
+ <ul>
+ <li><strong>ON:</strong> A condição ON define um predicado de junção explícito de forma muito parecida com o WHERE, permitindo junções complexas (ex: <code>ON aluno.ID = realiza.ID</code>).</li>
+ <li><strong>USING:</strong> Forma simplificada utilizada apenas quando os atributos a serem cruzados possuem exatamente o mesmo nome em ambas as tabelas.</li>
+ <li><strong>NATURAL JOIN:</strong> Une automaticamente as tabelas utilizando todos os atributos que tenham nomes idênticos.</li>
+ </ul>
+  </div>
+ 
+ <div class="slide">
+ <div class="callout yellow">
+ <p><strong>Cuidado:</strong> se tabelas tiverem atributos em comum que não devem ser a chave da relação (ex: uma coluna chamada <i><b>nome</i></b> na tabela aluno e <i><b>nome</i></b> na tabela departamento), o natural join fará cruzamentos indesejados e incorretos.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>1.5 EXEMPLO DE CÓDIGO</h3>
+ <p>Para ilustrar os conceitos de Joins e Relacionamentos, vamos criar um cenário prático baseado nas fontes analisadas. Imagine um sistema de uma universidade com duas tabelas simples: uma de Instrutores (Dimensão) e outra de Cursos que eles ministram (Fato).</p>
+ <pre><code>-- 1. Tabela Dimensão com coluna de salário
+CREATE TABLE instrutor (
+    ID INT PRIMARY KEY,
+    nome VARCHAR(50),
+    nome_dept VARCHAR(50),
+    salario DECIMAL(10,2) -- Alterado para DECIMAL para permitir cálculos
+);
+
+--2. Tabela Fato
+CREATE TABLE ministra (
+    ID_instrutor INT,
+    id_curso VARCHAR(10),
+    FOREIGN KEY (ID_instrutor) REFERENCES instrutor(ID)
+);</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>1.5 EXEMPLO DE CÓDIGO (Inserções)</h3>
+ <pre><code>INSERT INTO instrutor VALUES (1, 'Srinivasan', 'Comp. Sci.', 65000);
+INSERT INTO instrutor VALUES (2, 'Wu', 'Finance', 90000);
+INSERT INTO instrutor VALUES (3, 'Mozart', 'Music', NULL);
+INSERT INTO ministra VALUES (1, 'CS-101'), (1, 'CS-315'), (2, 'FIN-201');</code></pre>
+  </div>
+  
+  <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>EXPLICAÇÃO DETALHADA</h3>
+ <p><strong>1. Fundamentos: PK e FK</strong></p>
+ <p>No código acima, o <i><b>ID</i></b> na tabela instrutor é a Chave Primária (PK). Ele é único. Na tabela ministra, o <i><b>ID_instrutor</i></b> é a Chave Estrangeira (FK). Ela serve como um "apontador" que diz: "este curso foi dado pelo instrutor que possui esse ID na outra tabela".</p>
+ <p><strong>2. Produto Cartesiano vs. Condição de Junção</strong></p>
+ <p>Se você executar apenas <i><b>SELECT * FROM instrutor, ministra;</i></b>, o SQL fará o Produto Cartesiano. Como temos 3 instrutores e 3 registros de cursos, o resultado teria 9 linhas (3x3). Veríamos combinações absurdas, como o instrutor de Finanças dando aula de Computação.</p>
+ </div>
+ 
+   <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>EXPLICAÇÃO DETALHADA</h3>
+ <p><strong>2. Produto Cartesiano vs. Condição de Junção</strong></p>
+ <p>Para corrigir isso, usamos a Condição de Junção:</p>
+ <pre><code>SELECT nome, id_curso
+FROM instrutor
+JOIN ministra ON instrutor.ID = ministra.ID_instrutor;</code></pre>
+ <p>O ON atua como o "filtro inteligente", garantindo que o banco de dados só exiba a linha se o ID coincidir em ambos os lados.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>EXPLICAÇÃO DETALHADA</h3>
+ <p><strong>3. Tipos de Junções (A diferença no resultado)</strong></p>
+ <p>Baseado nos dados que inserimos, veja como o resultado muda conforme o tipo de Join:</p>
+ <ul>
+ <li><strong>INNER JOIN:</strong> Retornaria apenas Srinivasan e Wu. Mozart ficaria de fora, pois ele não tem correspondência na tabela ministra (não ministra cursos).</li>
+ <li><strong>LEFT JOIN:</strong> Retornaria Srinivasan, Wu e Mozart. Como Mozart não tem curso, a coluna id_curso apareceria como NULL para ele. É "leal" à tabela da esquerda (instrutor).</li>
+ <li><strong>FULL JOIN:</strong> Traria todos os instrutores e todos os cursos, mesmo aqueles (se houvesse) sem nenhum instrutor vinculado.</li>
+ </ul>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">1. O Universo dos Joins</div>
+ <h3>EXPLICAÇÃO DETALHADA</h3>
+ <p><strong>4. Sintaxe: ON, USING e NATURAL JOIN</strong></p>
+ <ul>
+ <li><strong>ON:</strong> É o mais flexível. Usamos <i><b>ON instrutor.ID = ministra.ID_instrutor</i></b> porque os nomes das colunas são diferentes.</li>
+ <li><strong>USING:</strong> Se ambas as colunas se chamassem ID, poderíamos usar <i><b>JOIN ministra USING (ID)</i></b>.</li>
+ <li><strong>NATURAL JOIN:</strong> O SQL tentaria adivinhar a conexão. Se as duas tabelas tivessem uma coluna chamada nome (uma para o nome do instrutor e outra para o nome do curso), o NATURAL JOIN tentaria cruzar os nomes, o que daria erro na lógica da consulta, pois nomes de pessoas e cursos não costumam ser iguais.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">02</div>
+ <h2>O Desafio dos Valores Nulos (NULL)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. O Desafio dos Valores Nulos</div>
+ <p>Para ilustrar o Desafio dos Valores Nulos (NULL), vamos expandir o nosso cenário de universidade. O segredo aqui é entender que o NULL não é o número zero nem um texto vazio; ele é um "buraco" na informação.</p>
+ 
+ <h3>Exemplo de Código SQL: O Caso dos Instrutores sem Salário</h3>
+ <pre><code>-- 1. Inserindo dados com valores NULL
+-- O instrutor 'Gold' acabou de ser contratado e seu salário é desconhecido (NULL).
+INSERT INTO instrutor (ID, nome, nome_dept, salario)
+VALUES (4, 'Gold', 'Physics', NULL);
+
+-- 2. O ERRO COMUM: Tentar usar o sinal de igual (=)
+-- Esta consulta NÃO retornará nada, pois 'NULL = NULL' resulta em 'Desconhecido'.
+SELECT nome FROM instrutor WHERE salario = NULL;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. O Desafio dos Valores Nulos</div>
+ <pre><code>-- 3. A FORMA CORRETA: Usando predicados especiais
+-- Para encontrar quem não tem salário definido:
+SELECT nome
+FROM instrutor
+where salario IS NULL;
+
+-- Para encontrar todos os que JÁ possuem salário definido:
+SELECT nome
+FROM instrutor
+WHERE salario IS NOT NULL;
+
+-- 4. NULL no DISTINCT (Comportamento de Identidade)
+-- Se houver dois professores com salário NULL, o DISTINCT os verá como "iguais".
+SELECT DISTINCT salario FROM instrutor;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. O Desafio dos Valores Nulos</div>
+ <h3>Explicação Detalhada do Conceito</h3>
+ <p><strong>1. A Lógica do "Desconhecido" (Unknown)</strong></p>
+ <p>Diferente de um número comum, o SQL usa uma lógica ternária. Em vez de apenas Verdadeiro ou Falso, existe o Desconhecido. Se você perguntar: "O salário do Gold (NULL) é igual a 5000?", o SQL responde: "Não sei". Se você perguntar: "O salário do Gold (NULL) é diferente de 5000?", o SQL responde: "Não sei". Por isso, operadores como = ou &lt;&gt; falham com nulos.</p>
+ 
+ <p><strong>2. Predicados IS NULL e IS NOT NULL</strong></p>
+ <p>Como o sinal de igual não funciona, o SQL fornece "ferramentas de teste" específicas. O <i><b>IS NULL</i></b> é a única forma confiável de verificar se um campo está vazio ou se a informação é não aplicável.</p>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">2. O Desafio dos Valores Nulos</div>
+ <h3>Explicação Detalhada do Conceito</h3>
+ <p><strong>3. O Paradoxo do DISTINCT e Operações de Conjunto</strong></p>
+ <p>Aqui o SQL abre uma exceção para facilitar a vida do usuário:</p>
+ <ul>
+ <li><strong>Nos Filtros (WHERE):</strong> NULL nunca é igual a NULL.</li>
+ <li><strong>No Agrupamento (DISTINCT, UNION, GROUP BY):</strong> Ο SQL trata todos os NULLs como se fossem a mesma coisa para não repetir linhas "vazias" várias vezes no resultado final.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">03</div>
+ <h2>Resumindo com Funções de Agregação</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Funções de Agregação</div>
+ <p>Dando sequência ao seu aprendizado, agora que já resolvemos os erros de inserção e entendemos como o SQL lida com espaços vazios (NULL), vamos entrar na fase de inteligência: como resumir milhares de dados em uma única resposta útil.</p>
+ <p>Imagine que o diretor da faculdade não quer ver a lista de todos os 5.000 professores (as tuplas individuais). Ele quer apenas um número: "Quanto gastamos por mês?". A Agregação faz exatamente isso: ela "espreme" uma coleção de várias linhas até que saia um único valor resumido.</p>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">3. Funções de Agregação</div>
+ <h3>3.1 As 5 Funções Principais</h3>
+ <p>Utilizando os dados da nossa tabela instrutor (Srinivasan, Wu, Mozart e Gold), veja como as funções se comportam:</p>
+ <ul>
+ <li><strong>A. COUNT() (Contagem):</strong><br>
+ a. <i><b>COUNT(*)</i></b>: Conta todas as linhas. Se você rodar no seu script, dará 4.<br>
+ b. <i><b>COUNT(salario)</i></b>: Olha apenas para a coluna salário. Como Mozart e Gold têm NULL, o SQL os ignora e retorna 2.</li>
+ <li><strong>B. SUM() (Soma):</strong> Soma os valores numéricos. No nosso caso, somará 65.000+90.000=155.000. Os nulos são ignorados.</li>
+ <li><strong>C. AVG() (Média):</strong> O SQL é inteligente. Ele soma os valores e divide apenas pela quantidade de registros não nulos. (155.000/2=77.500).</li>
+ <li><strong>D. MAX() e MIN() (Extremos):</strong><br>
+ a. <i><b>MAX(salario)</i></b> retornaria 90.000.<br>
+ b. Também funciona com textos! <i><b>MIN(nome)</i></b> retornaria "Gold" (primeiro na ordem alfabética).</li>
+ </ul>
+ </div>
+ 
+   <div class="slide">
+ <div class="slide-label">3. Funções de Agregação</div>
+ <h3>3.2 DISTINCT em Agregações</h3>
+ <p>Às vezes, você não quer saber quantos salários existem, mas sim quantas faixas salariais diferentes a empresa possui.</p>
+ <pre><code>-- Se tivermos dois professores ganhando exatamente 65.000, o COUNT(salario) diria "2".
+-- O COUNT(DISTINCT salario) diria "1", pois ele elimina as duplicatas antes de contar.
+
+-- Exemplo: Quantos departamentos diferentes têm professores cadastrados?
+SELECT COUNT(DISTINCT nome_dept) FROM instrutor;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Funções de Agregação</div>
+ <h3>3.3 A Armadilha do Agrupamento vs. Atributos Simples</h3>
+ <p>Este é o erro que mais frustra iniciantes. Tente mentalizar esta consulta:</p>
+ <p><strong>"Quem é o professor com o maior salário?"</strong></p>
+ <p>Muitos tentam escrever:</p>
+ <div class="callout red">
+ <i><b>SELECT nome, MAX(salario) FROM instrutor; (ISSO GERA ERRO!)</i></b>
+ <p><strong>Por que o SQL trava?</strong><br>
+ Pense logicamente: o <i><b>MAX(salario)</i></b> resulta em uma única linha (o valor 90.000). Mas a coluna nome tem quatro linhas diferentes. O banco de dados não sabe qual nome "colar" ao lado do valor máximo.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Funções de Agregação</div>
+ <p>As duas soluções permitidas:</p>
+ <p><strong>1. Usar o GROUP BY:</strong> Você diz ao SQL para criar pequenos grupos e aplicar a função em cada um.</p>
+ <pre><code>-- "Para cada departamento, me dê o maior salário"
+SELECT nome_dept, MAX(salario)
+FROM instrutor
+GROUP BY nome_dept;</code></pre>
+</div>
+
+ <div class="slide">
+ <div class="slide-label">3. Funções de Agregação</div>
+ <p>As duas soluções permitidas:</p>
+ <p><strong>2. Usar Subconsultas Aninhadas (Para o caso do "Quem é"):</strong> Se você quer o nome da pessoa específica, você faz uma pergunta dentro da outra.</p>
+ <pre><code>-- "Selecione o nome de quem tem o salário igual ao maior salário de todos"
+SELECT nome
+FROM instrutor
+WHERE salario = (SELECT MAX(salario) FROM instrutor);</code></pre>
+</div>
+
+ <div class="slide">
+ <div class="slide-label">3. Funções de Agregação</div>
+ <div class="callout blue">
+ <p><strong>Resumo Didático:</strong> As funções de agregação são como filtros de café: você joga uma grande quantidade de pó (dados brutos) e, ao final, só sai a essência (o resultado calculado). O segredo é nunca tentar misturar o "pó" (nomes individuais) com a "essência" (o total), a menos que você use o GROUP BY para organizar a mistura.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">04</div>
+ <h2>Agrupamentos e Filtros (GROUP BY e HAVING)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">4. Agrupamentos e Filtros</div>
+ <p>Dando continuidade na aula, já sabemos como somar e tirar médias, vamos aprender a organizar esses cálculos de forma inteligente. No SQL, isso é feito com o GROUP BY (o organizador) e o HAVING (o selecionador de elite).</p>
+ <p>Até agora, as nossas funções de agregação (como SUM) olhavam para a tabela inteira e davam um resultado único. Mas, na vida real, precisamos de detalhamento. Em vez de "Qual a soma de todos os salários?", queremos saber "Qual a soma dos salários por departamento?".</p>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">4. Agrupamentos e Filtros</div>
+ <h3>4.1 O Papel do GROUP BY</h3>
+ <p>O GROUP BY funciona como uma separação por "balaios". Ele diz ao SQL: "Antes de somar, separe as linhas em grupos que tenham o mesmo valor nesta coluna".</p>
+ <pre><code>-- Queremos a soma dos salários por departamento
+SELECT nome_dept, SUM(salario)
+FROM instrutor
+GROUP BY nome_dept;</code></pre>
+ <p>Aqui, o SQL cria um grupo para 'Comp. Sci.', outro para 'Finance', etc., e calcula a soma separadamente para cada um.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">4. Agrupamentos e Filtros</div>
+ <h3>4.2 A Regra de Ouro do Rigor Técnico</h3>
+ <div class="callout red">
+ <p>Este é o ponto onde a maioria dos estudantes comete erros. Imagine que você escreve:</p>
+ <code>SELECT nome, nome_dept, SUM(salario) FROM instrutor GROUP BY nome_dept;</code>
+ <p><strong>Isso dará erro! Porquê?</strong></p>
+ <ul>
+ <li>O SQL criou um único grupo para 'Comp. Sci.'.</li>
+ <li>Dentro desse grupo, existem vários nomes (ex: Srinivasan, etc.).</li>
+ <li>O SQL não sabe qual nome mostrar na linha que resume o grupo.</li>
+ </ul>
+ </div>
+ <p><strong>A regra é clara:</strong> Se uma coluna está no SELECT e não tem uma função (como SUM ou AVG) em volta dela, ela tem obrigatoriamente que estar na lista do GROUP BY.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">4. Agrupamentos e Filtros</div>
+ <h3>4.3 HAVING: O Filtro de Grupos</h3>
+ <p>Muitos alunos confundem o WHERE com o HAVING. A diferença é o momento em que eles agem:</p>
+ <ol>
+ <li><strong>WHERE (O porteiro):</strong> Age antes de tudo. Ele barra as linhas individuais. Ex: "Não conte professores com salário menor que 1000".</li>
+ <li><strong>HAVING (O auditor):</strong> Age depois que o grupo foi formado e a conta foi feita. Ele filtra o resultado da agregação.</li>
+ </ol>
+ 
+ <p><strong>Exemplo Comparativo:</strong></p>
+ <pre><code>SELECT nome_dept, AVG(salario)
+FROM instrutor
+WHERE nome_dept &lt;&gt; 'Music'
+GROUP BY nome_dept
+-- 1. Primeiro, remove o departamento de música
+-- 2. Agrupa os que sobraram
+HAVING AVG(salario) > 70000; -- 3. Só mostra os grupos cuja MÉDIA final foi > 70k</code></pre>
+</div>
+
+<div class="slide">
+ <div class="slide-label">4. Agrupamentos e Filtros</div>
+ <div class="callout blue">
+ <p><strong>Dica Didática:</strong> O WHERE não conhece o resultado da soma. Se você tentar usar <i><b>WHERE SUM(salario) > 1000</i></b>, o SQL vai reclamar porque, no passo do WHERE, a soma ainda nem foi calculada! Para filtrar somas, médias ou contagens, use sempre o HAVING.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <div class="section-num">05</div>
+ <h2>Ordem Lógica e Execução (O Funil do SQL)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">5. Ordem Lógica e Execução</div>
+ <p>Para encerrar nossa aula com chave de ouro, vamos entender o "cérebro" do banco de dados. Um dos maiores erros de quem aprende SQL é tentar ler o código da esquerda para a direita, como se fosse um livro. No entanto, o SQL é uma linguagem declarativa: você diz o que quer, e o banco decide como buscar. Para isso, ele segue uma ordem lógica interna que é bem diferente da ordem que escrevemos.</p>
+ <p>Imagine que o banco de dados é um chef de cozinha. Ele não começa decorando o prato (SELECT); ele começa pegando os ingredientes no estoque.</p>
+ 
+ <h3>1º FROM e JOIN (A Despensa)</h3>
+ <p>Antes de qualquer coisa, o SQL precisa saber: de onde vêm os dados? Ele vai até as tabelas (ex: instrutor e ministra) e as une. Conceitualmente, ele cria um grande mesclado de dados (o produto cartesiano filtrado pelas chaves PK/FK). Se não houver essa conexão inicial, não há dados para trabalhar.</p>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">5. Ordem Lógica e Execução</div>
+ <h3>2° WHERE (A Triagem)</h3>
+ <p>Agora que o "mesclado" de tabelas foi criado, o SQL olha linha por linha e joga fora o que não presta.</p>
+ <ul>
+ <li>Exemplo: "Só quero professores do departamento de Física".</li>
+ </ul>
+ <p>O WHERE reduz o tamanho do conjunto de dados logo no início para economizar memória.</p>
+ <h3>3º GROUP BY (A Organização)</h3>
+ <p>Com as linhas que sobraram, o SQL começa a montar "pacotes" ou "balaios".</p>
+ <ul>
+ <li>Exemplo: "Separe esses professores em pilhas por departamento".</li>
+ <li>As linhas individuais deixam de existir sozinhas e passam a fazer parte de um grupo.</li>
+ </ul>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">5. Ordem Lógica e Execução</div>
+ <h3>4° HAVING (O Controle de Qualidade dos Grupos)</h3>
+ <p>Aqui é onde muitos se confundem. O HAVING é um filtro que só funciona para os pacotes que acabamos de montar.</p>
+ <ul>
+ <li>Exemplo: "Destaque apenas os pacotes (departamentos) onde a soma dos salários é maior que 100 mil".</li>
+ </ul>
+ <p>Se o pacote não atingir a meta, ele é descartado inteiro.</p>
+ 
+ <h3>5° SELECT (A Apresentação do Prato)</h3>
+ <p>Só agora, no final, é que o SQL olha para o que você pediu para "mostrar".</p>
+ <ul>
+ <li>Ele calcula as médias e somas finais.</li>
+ <li>Ele escolhe quais colunas vão aparecer.</li>
+ <li>Ele coloca os apelidos (Aliases) que você definiu (ex: <i><b>AS total_gasto</i></b>).</li>
+ </ul>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">5. Ordem Lógica e Execução</div>
+ <div class="callout yellow">
+ <p><strong>Curiosidade:</strong> É por isso que você não pode usar um apelido criado no SELECT dentro do WHERE. Quando o banco passou pelo WHERE, o SELECT (e o apelido que você deu) ainda nem tinha sido processado.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Resumo Visual da Aula</div>
+ <div style="text-align:center;">
+ <img src="img01.png" alt="[Resumo Visual da Aula]">
+ </div>
+ </div>
+
+ </div>
+
+ <div class="controls">
+ <button id="prevBtn" onclick="prevSlide()" disabled>Anterior</button>
+ <div class="progress"><span id="current">1</span> / <span id="total"></span></div>
+ <button id="nextBtn" onclick="nextSlide()">Próximo</button>
+ </div>
+
+ <script>
+ let currentSlideIndex = 0;
+ const slides = document.querySelectorAll('.slide');
+ const totalSlides = slides.length;
+ const currentIndicator = document.getElementById('current');
+ const totalIndicator = document.getElementById('total');
+ const prevBtn = document.getElementById('prevBtn');
+ const nextBtn = document.getElementById('nextBtn');
+
+ totalIndicator.textContent = totalSlides;
+
+ function updateView() {
+ slides.forEach((slide, index) => {
+ slide.classList.remove('active');
+ if (index === currentSlideIndex) {
+ slide.classList.add('active');
+ }
+ });
+ currentIndicator.textContent = currentSlideIndex + 1;
+ 
+ prevBtn.disabled = currentSlideIndex === 0;
+ nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+ }
+
+ function nextSlide() {
+ if (currentSlideIndex < totalSlides - 1) {
+ currentSlideIndex++;
+ updateView();
+ }
+ }
+
+ function prevSlide() {
+ if (currentSlideIndex > 0) {
+ currentSlideIndex--;
+ updateView();
+ }
+ }
+
+ document.addEventListener('keydown', (e) => {
+ if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+ if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+ });
+ </script>
+</body>
+</html>
