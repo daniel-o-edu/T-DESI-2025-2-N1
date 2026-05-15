@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 16 - DCL e Segurança de Dados</title>
+<style>
+ body {
+ margin: 0; 
+ padding: 0; 
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: #f8f9fa; 
+ color: #212529;
+ display: flex; 
+ flex-direction: column; 
+ height: 100vh;
+ overflow: hidden;
+ }
+ .slide-container {
+ width: 95vw;
+ height: 85vh;
+ margin: auto;
+ display: flex; 
+ align-items: center; 
+ justify-content: center;
+ padding: 20px; 
+ box-sizing: border-box; 
+ position: relative;
+ }
+ .slide {
+ display: none; 
+ width: 100%; 
+ max-width: 1200px; 
+ height: 80vh;
+ background: #ffffff; 
+ border-radius: 12px;
+ box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+ padding: 50px;
+ font-size: 24px; 
+ line-height: 1.5; 
+ overflow-y: auto;
+ }
+ .slide.active { 
+ display: block; 
+ animation: fadeIn 0.4s ease-in-out;
+ }
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ h1, h2, h3, h4 { 
+ color: #0d6efd; 
+ margin-top: 0; 
+ }
+ code, pre { 
+ background: #e9ecef; 
+ padding: 10px 15px; 
+ border-radius: 8px; 
+ font-family: 'Courier New', Courier, monospace; 
+ display: block; 
+ font-size: 20px;
+ overflow-x: auto;
+ white-space: pre-wrap;
+ }
+ .controls {
+ height: 80px; 
+ background: #ffffff; 
+ border-top: 1px solid #dee2e6;
+ display: flex; 
+ justify-content: space-between; 
+ align-items: center; 
+ padding: 0 50px;
+ }
+ button {
+ background: #0d6efd; 
+ color: white; 
+ border: none; 
+ padding: 12px 25px;
+ font-size: 18px; 
+ border-radius: 8px; 
+ cursor: pointer;
+ transition: background 0.2s;
+ }
+ button:hover {
+ background: #0b5ed7;
+ }
+ button:disabled { 
+ background: #adb5bd; 
+ cursor: not-allowed; 
+ }
+ .progress { 
+ font-size: 20px; 
+ font-weight: bold; 
+ color: #495057;
+ }
+ .slide-label { font-weight: bold; text-transform: uppercase; color: #6c757d; margin-bottom: 20px; font-size: 18px; letter-spacing: 1px; }
+ .callout { padding: 20px 30px; border-radius: 8px; margin: 20px 0; border-left: 8px solid; }
+ .callout.blue { background: #cce5ff; border-color: #004085; color: #004085; }
+ .callout.green { background: #d4edda; border-color: #155724; color: #155724; }
+ .callout.red { background: #f8d7da; border-color: #721c24; color: #721c24; }
+ .callout.yellow { background: #fff3cd; border-color: #856404; color: #856404; }
+ .section-header { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+ .section-num { font-size: 80px; font-weight: bold; color: #e9ecef; margin-bottom: -20px; }
+ .section-header h2 { font-size: 48px; color: #0d6efd; margin-bottom: 20px; }
+ img { max-width: 100%; height: auto; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6; }
+</style>
+</head>
+<body>
+ <div class="slide-container" id="slides">
+
+ <div class="slide active">
+ <div class="slide-label">Aula 16</div>
+ <h1>Aula 16 - DCL e Segurança de Dados</h1>
+ <p><strong>Descrição:</strong> Implementar controle de acesso e segurança utilizando comandos DCL (GRANT, REVOKE) e garantir a integridade referencial dos dados.</p>
+ </div>
+
+ <div class="slide">
+ <h2>DCL (Data Control Language): GRANT e REVOKE</h2>
+ <p>A sublinguagem DCL é a parte do SQL responsável pela segurança, controle de acesso e autorização sobre os objetos do banco de dados (como tabelas, views, procedures).</p>
+ <p>Ela atua definindo o que cada usuário ou perfil ( role ) está autorizado a executar no sistema.</p>
+ <p>Os comandos centrais que formam o núcleo do controle de acesso são:</p>
+ <ul>
+ <li><strong>GRANT :</strong> É o comando utilizado para conceder (atribuir) privilégios de acesso a um usuário ou grupo sobre um objeto específico. Com ele, podemos liberar operações específicas como ler dados (SELECT), inserir (INSERT), atualizar (UPDATE) ou deletar (DELETE) registros.</li>
+ <li><strong>REVOKE :</strong> É o comando que atua na direção oposta, removendo privilégios que foram concedidos anteriormente. É essencial para corrigir concessões erradas, reduzir o nível de acesso de um usuário que mudou de função ou remover acessos que não são mais necessários.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <h2>Princípio do Menor Privilégio</h2>
+ <p>Este é um dos conceitos mais importantes na segurança de dados: consiste em dar a cada usuário  apenas e exatamente  o nível mínimo de permissões necessárias para que ele realize o seu trabalho.</p>
+ <p>Na prática, isso significa evitar o uso indiscriminado de concessões amplas, como conceder ALL PRIVILEGES a usuários comuns, e estruturar a separação de funções (por exemplo, um usuário de aplicação tem permissões diferentes de um usuário de relatórios).</p>
+ </div>
+
+ <div class="slide">
+ <h2>Integridade Referencial</h2>
+ <p>A integridade referencial é a garantia de que os relacionamentos entre tabelas conectadas por chaves estrangeiras ( FOREIGN KEY ) permaneçam consistentes ao longo do tempo.</p>
+ <p>O seu principal papel é assegurar que nenhum registro em uma tabela "filha" fique órfão, ou seja, apontando para um registro na tabela "pai" que já não existe mais.</p>
+ <p>Ela atua limitando ou determinando o comportamento do banco de dados quando os registros nas tabelas "pai" sofrem operações de atualização (UPDATE) ou exclusão (DELETE).</p>
+ </div>
+
+ <div class="slide">
+ <h2>Ações de Chave Estrangeira (ON DELETE / ON UPDATE)</h2>
+ <p>Quando estabelecemos uma chave estrangeira, precisamos dizer ao banco de dados como ele deve reagir se um registro pai for apagado ou modificado.</p>
+ <p>As principais ações suportadas são:</p>
+ <ul>
+ <li><strong>RESTRICT (Bloqueia) :</strong> Impede a exclusão ou a atualização de um registro na tabela pai caso existam registros filhos relacionados a ele. Ao tentar a ação, o banco de dados bloqueia a operação e lança um erro de violação de chave estrangeira.</li>
+ <li><strong>CASCADE (Propaga) :</strong> Propaga a alteração. Se o registro pai for excluído ou tiver sua chave atualizada, a mesma operação (exclusão ou atualização) acontecerá automaticamente e de forma transparente em todos os registros filhos relacionados, evitando que fiquem órfãos.</li>
+ <li><strong>SET NULL (Anula o vínculo) :</strong> Permite que o registro pai seja alterado ou excluído. Como consequência, o banco de dados define o campo correspondente (a chave estrangeira) na tabela filha como nulo (NULL), mantendo o registro filho, mas desvinculando-o do registro pai removido.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>Atividades Práticas</h2>
+  <p>Para estas atividades utilizaremos o Banco de Dados Sakila.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 1</div>
+ <h2>Atividade 1: Criação de Perfis e Controle de Acesso (DCL)</h2>
+ <p>Nesta atividade, simularemos a criação de dois funcionários da locadora com responsabilidades distintas.</p>
+ <h3>1. Criar Usuários:</h3>
+ <pre><code>CREATE USER 'atendente_loja'@'localhost' IDENTIFIED BY 'senha123';
+CREATE USER 'analista_financeiro'@'localhost' IDENTIFIED BY 'senha456';</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 1</div>
+ <h3>2. Conceder Permissões (Princípio do Menor Privilégio):</h3>
+ <ul>
+ <li>O  atendente  deve apenas realizar aluguéis e consultar filmes.</li>
+ <li>O  analista  deve apenas auditar pagamentos.</li>
+ </ul>
+ <pre><code>-- Atendente: consulta e inserção de aluguéis
+GRANT SELECT, INSERT ON sakila.rental TO 'atendente_loja'@'localhost';
+GRANT SELECT ON sakila.film TO 'atendente_loja'@'localhost';
+
+-- Analista: apenas leitura de pagamentos
+GRANT SELECT ON sakila.payment TO 'analista_financeiro'@'localhost';</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 1</div>
+ <h3>3. Teste de Violação de Segurança:</h3>
+ <p>Para executar o teste de violação de segurança, você precisará tentar apagar um registro (DELETE) da tabela payment logado como analista_financeiro. (usuário restrito). Como resultado, o sistema deve negar a operação. Aqui está o passo a passo e o comando exato:</p>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">Atividade Prática 1</div>
+ <h3>3. Teste de Violação de Segurança (Continuação):</h3>
+ <h4>Conectando com o usuário correto no DBeaver</h4>
+ <ul>
+ <li>Para que o teste funcione, o DBeaver precisa estar conectado com o usuário que criamos, e não com o usuário administrador (root).</li>
+ <li>No DBeaver, crie uma nova conexão MySQL.</li>
+ <li>Nas credenciais, preencha:<br>
+ Username : analista_financeiro<br>
+ Password : senha456</li>
+ <li>Clique na aba  Propriedades do Driver  (Driver Properties).</li>
+ <li>Na lista de propriedades que vai aparecer, procure por  allowPublicKeyRetrieval .</li>
+ <li>Altere o valor dessa propriedade de  FALSE  para  TRUE .</li>
+ <li>Dica : Se você não achar na lista, pode clicar no botão de "+" (Add) para adicionar a propriedade manualmente com o nome  allowPublicKeyRetrieval  e o valor  TRUE .</li>
+ <li>Conclua a criação e conecte-se.</li>
+ </ul>
+ </div>
+
+  <div class="slide">
+ <div class="slide-label">Atividade Prática 1</div>
+ <h3>3. Teste de Violação de Segurança (Continuação):</h3>
+ <h4>O Comando de Teste</h4>
+ <p>Abra um novo  Editor SQL  (SQL Editor) nesta nova conexão do analista_financeiro e execute o seguinte comando:</p>
+ <pre><code>DELETE FROM sakila.payment WHERE payment_id = 1;</code></pre>
+ </div>
+ 
+   <div class="slide">
+ <div class="slide-label">Atividade Prática 1</div>
+ <h4>Resultado Esperado</h4>
+ <p>Como concedemos apenas a permissão de SELECT (leitura) para este usuário na tabela payment, o DBeaver não conseguirá executar a exclusão. Ele retornará um erro de permissão negada no painel de resultados, que será algo muito semelhante a isso:</p>
+ <div class="callout red">
+ <p>Erro SQL [1142] [42000]:   DELETE command denied to user 'analista_financeiro'@'localhost' for table 'payment'</p>
+ </div>
+ <p>Isso prova que o DCL (Princípio do Menor Privilégio) está funcionando perfeitamente na prática!</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 2</div>
+ <h2>Atividade 2: Integridade Referencial na Prática (FK Actions)</h2>
+ <p>Vamos analisar o comportamento das chaves estrangeiras na relação customer (Pai) e rental (Filho). Para esta atividade, você deve voltar para o usuário  root (Administrador) .</p>
+ 
+ <h3>1. Analisar a Constraint Atual:</h3>
+ <p>Verifique como o banco reage ao tentar excluir um cliente que possui aluguéis ativos. (O padrão costuma ser RESTRICT) .</p>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">Atividade Prática 2</div>
+ <h3>2. Alterar Comportamento para Segurança de Dados:</h3>
+ <p>Cenário : Se um cliente for excluído por erro, não queremos perder o histórico de aluguéis, mas os registros não podem ficar "órfãos". Vamos usar SET NULL.</p>
+ <p>Você vai pedir para o banco de dados colocar o valor NULL na coluna customer_id da tabela rental caso o cliente seja deletado. Porém, na estrutura original do banco  sakila , a coluna customer_id na tabela rental foi criada com a regra  NOT NULL  (não aceita valores nulos).</p>
+ </div>
+ 
+   <div class="slide">
+ <div class="slide-label">Atividade Prática 2</div>
+ <h3>2. Alterar Comportamento para Segurança de Dados (Continuação):</h3>
+ <p>Para que a nossa regra funcione, primeiro precisamos alterar a estrutura da coluna para permitir valores nulos. Utilize os comandos abaixo:</p>
+ <pre><code>-- Removendo a FK atual e recriando com SET NULL
+ALTER TABLE sakila.rental MODIFY customer_id SMALLINT UNSIGNED NULL;
+
+ALTER TABLE sakila.rental
+ADD CONSTRAINT fk_rental_customer
+FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
+ON DELETE SET NULL ON UPDATE CASCADE; --</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 2</div>
+ <h3>3. Teste de Integridade:</h3>
+ <p>Exclua um cliente de teste e observe se o customer_id na tabela rental tornou-se NULL automaticamente. Vamos prosseguir com a exclusão do cliente para ver a mágica acontecendo:</p>
+ <pre><code>-- Verificar os aluguéis do cliente 1
+SELECT * FROM sakila.rental WHERE customer_id = 1;
+
+-- Deletar os pagamentos dele primeiro (pois a tabela payment também segura o cliente)
+DELETE FROM sakila.payment WHERE customer_id = 1;
+
+-- Deletar o cliente
+DELETE FROM sakila.customer WHERE customer_id = 1;
+
+-- Verificar a tabela de aluguéis de novo (os registros ainda estarão lá, mas com customer_id = NULL)
+SELECT * FROM sakila.rental WHERE customer_id IS NULL;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 2</div>
+ <h3>4. Resultado esperado:</h3>
+ <p>O resultado esperado deste teste é a comprovação visual de que a regra  ON DELETE SET NULL  funcionou perfeitamente, mantendo o histórico de dados sem gerar inconsistências (registros órfãos).</p>
+ <p>Aqui está o que vocês verão acontecer passo a passo:</p>
+ <ol>
+ <li><i>SELECT * FROM sakila.rental WHERE customer_id = 1;</i><br>
+ Resultado:  O DBeaver mostrará uma tabela com vários registros de aluguéis (geralmente mais de 30 no banco Sakila padrão) onde a coluna customer_id está preenchida com o número  1 .</li>
+ <li><i>DELETE FROM sakila.payment WHERE customer_id = 1;</i>  e  <i>DELETE FROM sakila.customer WHERE customer_id = 1;</i><br>
+ Resultado:  Os comandos serão executados com sucesso (mensagem de  OK  ou  Rows affected ). O banco  não  bloqueará a exclusão do cliente, pois a regra restritiva foi substituída.</li>
+ <li><i>SELECT * FROM sakila.rental WHERE customer_id IS NULL;</i><br>
+ Resultado Principal:  A tela de resultados mostrará  exatamente os mesmos aluguéis  que apareceram no passo 1. A grande diferença – e a "mágica" da aula – é que agora a coluna customer_id de todas essas linhas estará preenchida com  NULL  (um valor nulo/vazio).</li>
+ </ol>
+ </div>
+ 
+  <div class="slide">
+ <div class="slide-label">Atividade Prática 2</div>
+ <h3>Conclusão:</h3>
+ <p>O teste prova que o SGBD fez a manutenção automática da Integridade Referencial. O cliente foi excluído do sistema, mas a locadora  não perdeu o seu histórico de aluguéis  (o que aconteceria se usassem CASCADE) e o sistema  não travou a exclusão  (o que aconteceria no RESTRICT). O vínculo foi simplesmente desfeito com segurança.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 3</div>
+ <h2>Atividade 3: Cenário Integrado (Segurança + Integridade)</h2>
+ <p>É a hora de mostrar que a proteção de um banco de dados é feita em camadas e que o DCL e a Integridade Referencial são melhores amigos na vida real de um DBA.</p>
+ <p><strong>Objetivo:</strong>  Demonstrar que ter permissão de acesso (DCL) não dá ao usuário o direito de quebrar as regras de negócio e a consistência do banco de dados (Integridade Referencial).</p>
+ </div> 
+ 
+  <div class="slide">
+ <div class="slide-label">Atividade Prática 3</div>
+ <h2>Atividade 3: Cenário Integrado (Segurança + Integridade)</h2>
+ <h3>1. O Contexto e o Problema</h3>
+ <p>Relembre os alunos da Atividade 1: nós demos ao usuário atendente_loja a permissão de INSERT na tabela rental. Ou seja, o crachá dele permite entrar no sistema e registrar um novo aluguel.</p>
+ <div class="callout yellow">
+ <p><strong>O Problema:</strong>  E se esse atendente digitar o código de um filme/inventário errado na hora de alugar? O sistema vai aceitar só porque ele tem permissão de INSERT?</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 3</div>
+ <h3>2. O Desafio Prático</h3>
+ <p>Vamos nos conectar com o usuário  atendente_loja  e tentar registrar um aluguel para um item de inventário que não existe (por exemplo, inventory_id = 999999).</p>
+ <p>Comando para execução:</p>
+ <pre><code>-- Tentativa de inserir um aluguel com um filme que não existe no inventário
+INSERT INTO sakila.rental (rental_date, inventory_id, customer_id, staff_id)
+VALUES (NOW(), 999999, 1, 1);</code></pre>
+</div> 
+
+ <div class="slide">
+ <div class="slide-label">Atividade Prática 3</div>
+ <h3>3. Resultado Esperado</h3>
+ <p>Vai retornar um erro, mas  não será um erro de permissão negada (DCL)  como vimos na Atividade 1. Será um erro de chave estrangeira!</p>
+ <div class="callout red">
+ <p>Erro SQL [1452] [23000]:   Cannot add or update a child row: a foreign key constraint fails (sakila.rental, CONSTRAINT fk_rental_inventory FOREIGN KEY (inventory_id) REFERENCES inventory (inventory_id))</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>Encerramento</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">4. Encerramento</div>
+ <h2>Conclusão</h2>
+ <p>Nesta aula demonstramos que um Banco de Dados robusto não depende apenas de tabelas bem estruturadas, mas de uma gestão ativa de  quem  pode acessar os dados e de  como  esses dados se comportam em caso de alterações.</p>
+ <p>A combinação de permissões restritivas (DCL) com regras de integridade (FK Actions) cria um ambiente onde o erro é interceptado pelo sistema antes de comprometer a base de dados.</p>
+ 
+ <h2>Na Próxima Aula</h2>
+ <div class="callout blue">
+ <p>Enquanto nesta aula focamos em evitar a corrupção lógica e acessos indevidos, a  Aula 17  tratará da última linha de defesa: a recuperação física dos dados em caso de falha catastrófica ou perda total.</p>
+ </div>
+ </div>
+
+ </div>
+
+ <div class="controls">
+ <button id="prevBtn" onclick="prevSlide()" disabled>Anterior</button>
+ <div class="progress"><span id="current">1</span> / <span id="total"></span></div>
+ <button id="nextBtn" onclick="nextSlide()">Próximo</button>
+ </div>
+
+ <script>
+ let currentSlideIndex = 0;
+ const slides = document.querySelectorAll('.slide');
+ const totalSlides = slides.length;
+ const currentIndicator = document.getElementById('current');
+ const totalIndicator = document.getElementById('total');
+ const prevBtn = document.getElementById('prevBtn');
+ const nextBtn = document.getElementById('nextBtn');
+
+ totalIndicator.textContent = totalSlides;
+
+ function updateView() {
+ slides.forEach((slide, index) => {
+ slide.classList.remove('active');
+ if (index === currentSlideIndex) {
+ slide.classList.add('active');
+ }
+ });
+ currentIndicator.textContent = currentSlideIndex + 1;
+ 
+ prevBtn.disabled = currentSlideIndex === 0;
+ nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+ }
+
+ function nextSlide() {
+ if (currentSlideIndex < totalSlides - 1) {
+ currentSlideIndex++;
+ updateView();
+ }
+ }
+
+ function prevSlide() {
+ if (currentSlideIndex > 0) {
+ currentSlideIndex--;
+ updateView();
+ }
+ }
+
+ document.addEventListener('keydown', (e) => {
+ if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+ if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+ });
+ </script>
+</body>
+</html>
