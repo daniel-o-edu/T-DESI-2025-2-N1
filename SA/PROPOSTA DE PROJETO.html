@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposta de Estrutura - Projeto de SA</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      color: #212529;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .slide-container {
+      width: 95vw;
+      height: 85vh;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      height: 80vh;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      padding: 50px;
+      font-size: 24px;
+      line-height: 1.5;
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      display: block;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #6f42c1;
+      /* Roxo para temática PHP/Estrutura */
+      margin-top: 0;
+    }
+
+    code,
+    pre {
+      background: #f1f3f5;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', Courier, monospace;
+      display: block;
+      font-size: 18px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      border-left: 4px solid #6f42c1;
+    }
+
+    .controls {
+      height: 80px;
+      background: #ffffff;
+      border-top: 1px solid #dee2e6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 50px;
+    }
+
+    button {
+      background: #6f42c1;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #5a32a3;
+    }
+
+    button:disabled {
+      background: #adb5bd;
+      cursor: not-allowed;
+    }
+
+    .progress {
+      font-size: 20px;
+      font-weight: bold;
+      color: #495057;
+    }
+
+    .slide-label {
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #6c757d;
+      margin-bottom: 20px;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    .callout {
+      padding: 20px 30px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 8px solid;
+    }
+
+    .callout.blue {
+      background: #cce5ff;
+      border-color: #004085;
+      color: #004085;
+    }
+
+    .callout.red {
+      background: #f8d7da;
+      border-color: #721c24;
+      color: #721c24;
+    }
+
+    .callout.yellow {
+      background: #fff3cd;
+      border-color: #856404;
+      color: #856404;
+    }
+
+    .section-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+    }
+
+    .section-num {
+      font-size: 80px;
+      font-weight: bold;
+      color: #e9ecef;
+      margin-bottom: -20px;
+    }
+
+    .section-header h2 {
+      font-size: 48px;
+      color: #6f42c1;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    table th,
+    table td {
+      border: 1px solid #dee2e6;
+      padding: 12px;
+      text-align: left;
+    }
+
+    table th {
+      background-color: #f1f3f5;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 1px solid #dee2e6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="slide-container" id="slides">
+
+    <div class="slide active">
+      <div class="slide-label">PROPOSTA DE ESTRUTURA</div>
+      <h1>PROPOSTA DE ESTRUTURA - PROJETO DE SA</h1>
+      <p>Organizar um projeto usando <b>MVC (Model-View-Controller) e DAO (Data Access Object)</b> é uma excelente
+        prática para manter o código limpo, dividido e fácil de dar manutenção.</p>
+      <p><b>Para ficar claro:</b> o Flask (que roda em Python) vai centralizar o seu Controller (gerenciando as rotas) e
+        também vai renderizar as suas Views (através de arquivos HTML/Jinja2). O MySQL será o destino final dos seus
+        dados, gerenciado pela camada DAO .</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Estrutura de Arquivos</div>
+      <p>Estrutura de Arquivos Sugerida: Essa estrutura separa rigidamente as responsabilidades de cada componente:</p>
+      <code>meu_projeto/
+├── DOCS                       # Pasta onde devem ser armazenados todos os documentos
+├── config.py                  # Configurações globais (credenciais do banco, chaves, etc.)
+├── run.py                     # Arquivo principal para iniciar a aplicação
+├── requisitos.txt             # Dependências do projeto (flask, mysql-connector, etc.)
+└── app/
+  ├── __init__.py              # Inicializa o Flask e junta as peças
+  ├── models/                  # [MODEL] Classes que representam as tabelas do banco
+  │     ├── __init__.py
+  │     └── usuario.py
+  ├── dao/                     # [DAO] Isolamento das consultas SQL do MySQL
+  │     ├── __init__.py
+  │     ├── db_connection.py   # Gerenciador de conexão com o MySQL
+  │     └── usuario_dao.py     # Métodos CRUD específicos do usuário
+  ├── controllers/             # [CONTROLLER] Rotas do Flask e lógica de requisição
+  │     ├── __init__.py
+  │     └── usuario_controller.py
+  └── templates/               # [VIEW] Páginas HTML que o usuário vai ver
+          ├── base.html        # Layout padrão (Header, Navbar, Footer)
+          └── usuario/
+              ├── cadastro.html
+              └── login.html</code>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Estrutura de Arquivos</div>
+      <h2>Estrutura de Arquivos Sugerida</h2>
+      <p>Agora vamos detalhar cada arquivo da estrutura acima para que você e sua equipe entendam exatamente o papel de
+        cada um no ecossistema do projeto. Para ajudar a visualizar como esses arquivos conversam entre si quando o
+        usuário interage com o sistema, veja o fluxo abaixo:</p>
+
+      <h3><i><b>config.py</i></b></h3>
+      <p><b>Funcionalidade:</b> Centraliza variáveis de configuração globais, como as credenciais do banco de dados
+        MySQL (host, usuário, senha, nome do banco) e chaves secretas do Flask.</p>
+      <p><b>Explicação:</b> Pense nele como o painel de controle do projeto. Em vez de espalhar a senha do banco de
+        dados por vários arquivos, você coloca tudo aqui. Se amanhã o banco mudar de endereço, você altera apenas esse
+        arquivo.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Detalhamento</div>
+      <h2>Arquivos da Raiz do Projeto (Continuação)</h2>
+      <h3><i><b>run.py</i></b></h3>
+      <p><b>Funcionalidade:</b> É o ponto de entrada da aplicação. Ele importa a configuração do servidor e inicia o
+        projeto.</p>
+      <p><b>Explicação:</b> É a chave de ignição do motor. Quando você digita no terminal python run.py, é esse arquivo
+        que "dá a partida" no Flask para o site ficar online.</p>
+
+      <h3><i><b>requisitos.txt (ou requirements.txt)</i></b></h3>
+      <p><b>Funcionalidade:</b> Uma lista de texto contendo todas as bibliotecas externas que o projeto precisa para
+        rodar (ex: Flask, mysql-connector-python).</p>
+      <p><b>Explicação:</b> É a lista de compras do ambiente de desenvolvimento. Quando um colega de equipe baixa o
+        projeto, ele roda um comando único (pip install -r requisitos.txt) e o Python instala tudo o que falta
+        automaticamente.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Detalhamento</div>
+      <h2>Pasta app/ (O Coração da Aplicação)</h2>
+      <h3><i><b>app/__init__.py</i></b></h3>
+      <p><b>Funcionalidade:</b> Transforma a pasta app em um pacote Python, inicializa o objeto do Flask e registra as
+        rotas (Blueprints).</p>
+      <p><b>Explicação:</b> Ele funciona como o gerente de integração . Assim que o projeto é iniciado pelo run.py, o
+        __init__.py acorda, cria o aplicativo Flask, lê as configurações e junta os Controllers e as Views para
+        trabalharem em harmonia.</p>
+
+      <h2>Camada Model (Regras de Negócio e Dados)</h2>
+      <h3><i><b>app/models/usuario.py</i></b></h3>
+      <p><b>Funcionalidade:</b> Contém a classe Usuario escrita em Python puro, representando a estrutura da tabela do
+        banco de dados (atributos como id, nome, email).</p>
+      <p><b>Explicação:</b> É o molde ou fôrma do dado.Ele não sabe o que é HTML e não sabe o que é SQL; ele apenas sabe
+        como um Usuário deve ser estruturado dentro da memória do computador.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Detalhamento</div>
+      <h2>Camada DAO (Data Access Object)</h2>
+      <h3><i><b>app/dao/db_connection.py</i></b></h3>
+      <p><b>Funcionalidade:</b> Abre e fecha conexões com o banco de dados MySQL usando as credenciais do config.py.</p>
+      <p><b>Explicação:</b> É a ponte levadiça . Sempre que o sistema precisar falar com o MySQL, ele pede para este
+        arquivo abrir um canal seguro de comunicação e, após o uso, fechar esse canal para não desperdiçar memória.</p>
+
+      <h3><i><b>app/dao/usuario_dao.py</i></b></h3>
+      <p><b>Funcionalidade:</b> Contém a classe UsuarioDAO, onde ficam armazenadas as funções que executam comandos SQL
+        diretamente (como INSERT, SELECT, UPDATE, DELETE).</p>
+      <p><b>Explicação:</b> É o tradutor/mensageiro . É o único arquivo do sistema que "fala SQL". Quando o sistema quer
+        cadastrar alguém, o Controller entrega um objeto Usuario (do Model) para o DAO, e o DAO traduz isso em um
+        comando INSERT INTO usuario... para o MySQL.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Detalhamento</div>
+      <h2>Camada Controller (A Lógica e as Rotas)</h2>
+      <h3><i><b>app/controllers/usuario_controller.py</i></b></h3>
+      <p><b>Funcionalidade:</b> Define as URLs/rotas do site (ex: /cadastro, /login), recebe os dados enviados pelos
+        formulários e decide o que fazer.</p>
+      <p><b>Explicação:</b> É o guarda de trânsito ou recepcionista. Quando o usuário clica em "Enviar" no formulário de
+        cadastro, a requisição bate aqui. O Controller pega os dados do formulário, valida se estão certos, chama o DAO
+        para salvar no banco e decide: "Ok, agora vou mandar o usuário para a página de sucesso" .</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Detalhamento</div>
+      <h2>Camada View (A Interface do Usuário)</h2>
+      <h3><i><b>app/templates/base.html</i></b></h3>
+      <p><b>Funcionalidade:</b> Contém a estrutura HTML fixa que se repete em todas as páginas (como a barra de
+        navegação superior, o rodapé e as importações do CSS/Bootstrap).</p>
+      <p><b>Explicação:</b> É o esqueleto visual . Para você não ter que copiar e colar o menu do site em todas as
+        páginas do projeto, você faz isso uma vez só aqui. As outras páginas apenas "encaixam" o conteúdo delas dentro
+        desse esqueleto.</p>
+
+      <h3><i><b>app/templates/usuario/cadastro.html e login.html</i></b></h3>
+      <p><b>Funcionalidade:</b> Páginas HTML específicas que contêm os formulários de entrada de dados utilizando a
+        sintaxe do Jinja2 para se integrarem ao Flask.</p>
+      <p><b>Explicação:</b> É a vitrine . É o que o usuário final enxerga na tela do navegador. O formulário envia os
+        dados através do atributo method="POST" direto para o Controller processar.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Passo a Passo</div>
+      <h2>Roteiro do Projeto: Passo a Passo</h2>
+      <p>Entender o roteiro de execução é fundamental para que o projeto não saia dos trilhos. Abaixo, apresento um
+        detalhamento aprofundado do "Roteiro do Projeto", expandindo as instruções com práticas de mercado e passos
+        práticos para facilitar a implementação da sua equipe:</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Passo a Passo</div>
+      <h3>Etapa 1: Configuração do Ambiente e Banco de Dados</h3>
+      <p>Esta é a fundação do projeto. Sem um ambiente isolado e um banco estruturado, o código não terá onde rodar ou
+        armazenar informações.</p>
+      <hr>
+      <p><b>- Ambiente Python:</b> O primeiro passo é criar um ambiente virtual (venv) para isolar as bibliotecas deste
+        projeto das demais no seu computador e, em seguida, instalar o Flask e o conector do MySQL (sendo recomendados o
+        mysql-connector-python ou pymysql).</p>
+      <p><b>Aprofundamento:</b> No terminal, você usará comandos como python -m venv venv para criar o ambiente e
+        ativá-lo. Depois, ao instalar as dependências com pip install, lembre-se de salvar a lista exata rodando pip
+        freeze > requisitos.txt. Isso garante que sua equipe tenha a "lista de compras" correta.</p>
+      <hr>
+      <p><b>- Modelagem SQL:</b> No MySQL, é necessário criar o banco de dados e as tabelas correspondentes, como a
+        tabela usuario. Vocês devem guardar o script .sql resultante na pasta do projeto.</p>
+      <p><b>Aprofundamento:</b> Crie um arquivo chamado init_db.sql na raiz do projeto. Nele, escreva os comandos CREATE
+        DATABASE e CREATE TABLE. Isso serve como documentação e permite que qualquer novo membro da equipe recrie o
+        banco de dados idêntico ao seu em questão de segundos.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Passo a Passo</div>
+      <h3>Etapa 2: A Conexão e a Camada DAO (Data Access Object)</h3>
+      <p>Aqui construímos as "pontes" e os "veículos" que transportam a informação do código para o banco de dados.</p>
+      <hr>
+      <p><b>- A Ponte de Conexão:</b> No arquivo db_connection.py, criem uma classe ou função que abre e fecha a conexão
+        com o MySQL usando os dados do config.py.</p>
+      <p><b>Aprofundamento:</b> É vital garantir que a conexão seja fechada (usando cursor.close() e connection.close())
+        mesmo que ocorra um erro durante a consulta. O uso de blocos try/except/finally em Python é a melhor prática
+        para isso.</p>
+      <hr>
+      <p><b>- O Veículo (Model):</b> No models/usuario.py, criem a classe Usuario contendo os atributos do banco (id,
+        nome, email, senha) e o método construtor __init__. Essa classe servirá exclusivamente para transportar os dados
+        pelo sistema.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Passo a Passo</div>
+      <h3>Etapa 2: A Conexão e a Camada DAO (Data Access Object) - Continuação</h3>
+      <p><b>- O Mensageiro (DAO):</b> No dao/usuario_dao.py, criem a classe UsuarioDAO para abrigar funções com comandos
+        SQL puros, como inserir_usuario(usuario) ou buscar_por_id(id).</p>
+      <p><b>Aprofundamento:</b> Nunca concatene variáveis diretamente na string SQL (ex: f"SELECT * FROM usuario WHERE
+        nome = {nome}"). Use queries parametrizadas (ex: WHERE nome = %s) fornecidas pelo conector para evitar ataques
+        de SQL Injection.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Passo a Passo</div>
+      <h3>Etapa 3: A Camada Controller (Rotas Flask)</h3>
+      <p>O Controller é o cérebro das operações web. Ele recebe o tráfego de usuários e decide como orquestrar o Model e
+        o DAO.</p>
+      <hr>
+      <p><b>- Organização de Rotas:</b> No arquivo controllers/usuario_controller.py, criem as rotas utilizando
+        Blueprints, que é a maneira do Flask separar rotas em diferentes arquivos.</p>
+      <hr>
+      <p><b>- Fluxo de Requisição:</b> Em rotas de submissão (como @usuario.route('/cadastrar', methods=['POST'])), o
+        papel de vocês é capturar os dados do formulário HTML, criar uma instância do Model Usuario, enviar para o DAO
+        salvar e redirecionar o usuário.</p>
+      <p><b>Aprofundamento:</b> Antes de enviar os dados para o DAO, o Controller deve validar as informações. Verifique
+        se os campos não estão vazios, se o e-mail tem um formato válido ou se a senha atende aos requisitos mínimos. Se
+        houver erro, devolva o usuário para a página de cadastro com uma mensagem de aviso em vez de travar o sistema.
+      </p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Passo a Passo</div>
+      <h3>Etapa 4: A Camada View (Interface)</h3>
+      <p>É aqui que o "esqueleto" visual ganha vida para o usuário final.</p>
+      <hr>
+      <p><b>- Layout Base:</b> No arquivo templates/base.html, estruturem o HTML5 principal e adicionem o CSS ou
+        Bootstrap para dar estilo.</p>
+      <p><b>Aprofundamento:</b> Usem as tags do Jinja2 como {% block content %}{% endblock %} neste arquivo base. É
+        nesse espaço reservado que o conteúdo das outras páginas será injetado.</p>
+      <hr>
+      <p><b>- Páginas Específicas:</b> Na pasta templates/usuario/, criem as páginas que herdarão o layout do base.html
+        via Jinja2. O mais importante aqui é garantir que os atributos name dos formulários (ex: &lt;input
+        name="email"&gt;) sejam idênticos ao que o Controller está esperando receber.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Passo a Passo</div>
+      <h3>Etapa 5: Junta Tudo e Roda</h3>
+      <p>A amarração final para colocar o sistema no ar.</p>
+      <p><b>- Registro no App:</b> Abram o arquivo app/__init__.py para configurar a criação da aplicação Flask e para
+        registrar os Blueprints que vocês criaram nos controllers.</p>
+      <hr>
+      <p><b>- A Chave de Ignição:</b> No arquivo run.py, façam a importação do app e rodem o comando
+        app.run(debug=True).</p>
+      <p><b>Aprofundamento:</b> O parâmetro debug=True é excelente para o desenvolvimento, pois ele reinicia o servidor
+        automaticamente sempre que você salva um arquivo e mostra os erros detalhados no navegador. Lembre-se de remover
+        ou alterar para False quando o sistema for publicado em um servidor real por questões de segurança.</p>
+    </div>
+
+    <div class="slide">
+      <div class="slide-label">Conclusão</div>
+      <h3>Conclusão: O Objetivo Desta Proposta Estrutural</h3>
+      <p><b>1. Padronização e Divisão Rígida de Responsabilidades</b></p>
+      <p>Este documento visa erradicar o código confuso (comumente chamado de "código espaguete") ao introduzir a combinação do padrão MVC (Model-View-Controller) com a camada DAO (Data Access Object).</p>
+      <p>Ao separar rigidamente onde o dado é moldado (Model) , onde o SQL é isolado (DAO) , onde as rotas e regras de negócio transitam (Controller) e onde a interface é renderizada (View) , este guia garante que cada membro da equipe saiba exatamente onde criar ou modificar uma funcionalidade.</p>
+    </div>
+
+       <div class="slide">
+      <div class="slide-label">Conclusão</div>
+      <h3>Conclusão: O Objetivo Desta Proposta Estrutural</h3>
+      <p><b>2. Autonomia, Alinhamento e Continuidade da Equipe</b></p>
+      <p>Projetos em equipe frequentemente sofrem com gargalos de comunicação ou dependência de um único desenvolvedor. O objetivo do documento é democratizar o conhecimento técnico do ecossistema do projeto.</p>
+      <p>Detalhando os arquivos como o config.py (painel de controle) , requisitos.txt (lista de compras de bibliotecas) e a pasta DOCS/ , o guia cria um ambiente onde qualquer integrante pode clonar o repositório, instalar as dependências e continuar o trabalho sem atritos ou perda de tempo.
+      </p>
+    </div>
+
+       <div class="slide">
+      <div class="slide-label">Conclusão</div>
+      <h3>Conclusão: O Objetivo Desta Proposta Estrutural</h3>
+      <p><b>3. Roteirização Progressiva (Mitigação de Riscos)</b></p>
+      <p>O desenvolvimento de software pode ser esmagador se abordado de uma vez só. A divisão em 5 etapas consecutivas cumpre o papel de estabelecer metas claras e cronológicas:</p>
+      <ul>
+      <li><p><b>Fundação Segura:</b> Isolar o ambiente (venv) e documentar o banco (init_db.sql).</li></p>
+      <li><p><b>Segurança e Conexão:</b> Blindar o sistema contra falhas de memória e ataques externos (como SQL Injection via queries parametrizadas).</p></li>
+      <li><p><b>Orquestração e UX:</b> Validar dados no servidor antes de salvá-los e reaproveitar estruturas visuais com Jinja2 para agilizar o front-end.</p></li>
+<li><p><b>Acabamento:</b> Ativar o modo de depuração (debug=True) de forma consciente durante a construção.</p></li>
+
+</div>
+  </div>
+  <div class="controls">
+    <button id="prevBtn" onclick="prevSlide()" disabled>Anterior</button>
+    <div class="progress"><span id="current">1</span> / <span id="total"></span></div>
+    <button id="nextBtn" onclick="nextSlide()">Próximo</button>
+  </div>
+
+  <script>
+    let currentSlideIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const currentIndicator = document.getElementById('current');
+    const totalIndicator = document.getElementById('total');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    totalIndicator.textContent = totalSlides;
+
+    function updateView() {
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active');
+        if (index === currentSlideIndex) {
+          slide.classList.add('active');
+        }
+      });
+      currentIndicator.textContent = currentSlideIndex + 1;
+
+      prevBtn.disabled = currentSlideIndex === 0;
+      nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+    }
+
+    function nextSlide() {
+      if (currentSlideIndex < totalSlides - 1) {
+        currentSlideIndex++;
+        updateView();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlideIndex > 0) {
+        currentSlideIndex--;
+        updateView();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+    });
+  </script>
+</body>
+
+</html>
