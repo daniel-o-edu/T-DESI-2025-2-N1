@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 17 - Views, Stored Procedures e Triggers</title>
+<style>
+ body {
+ margin: 0; 
+ padding: 0; 
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: #f8f9fa; 
+ color: #212529;
+ display: flex; 
+ flex-direction: column; 
+ height: 100vh;
+ overflow: hidden;
+ }
+ .slide-container {
+ width: 95vw;
+ height: 85vh;
+ margin: auto;
+ display: flex; 
+ align-items: center; 
+ justify-content: center;
+ padding: 20px; 
+ box-sizing: border-box; 
+ position: relative;
+ }
+ .slide {
+ display: none; 
+ width: 100%; 
+ max-width: 1200px; 
+ height: 80vh;
+ background: #ffffff; 
+ border-radius: 12px;
+ box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+ padding: 50px;
+ font-size: 24px; 
+ line-height: 1.5; 
+ overflow-y: auto;
+ }
+ .slide.active { 
+ display: block; 
+ animation: fadeIn 0.4s ease-in-out;
+ }
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ h1, h2, h3, h4 { 
+ color: #0d6efd; 
+ margin-top: 0; 
+ }
+ code, pre { 
+ background: #e9ecef; 
+ padding: 10px 15px; 
+ border-radius: 8px; 
+ font-family: 'Courier New', Courier, monospace; 
+ display: block; 
+ font-size: 20px;
+ overflow-x: auto;
+ white-space: pre-wrap;
+ }
+ .controls {
+ height: 80px; 
+ background: #ffffff; 
+ border-top: 1px solid #dee2e6;
+ display: flex; 
+ justify-content: space-between; 
+ align-items: center; 
+ padding: 0 50px;
+ }
+ button {
+ background: #0d6efd; 
+ color: white; 
+ border: none; 
+ padding: 12px 25px;
+ font-size: 18px; 
+ border-radius: 8px; 
+ cursor: pointer;
+ transition: background 0.2s;
+ }
+ button:hover {
+ background: #0b5ed7;
+ }
+ button:disabled { 
+ background: #adb5bd; 
+ cursor: not-allowed; 
+ }
+ .progress { 
+ font-size: 20px; 
+ font-weight: bold; 
+ color: #495057;
+ }
+ .slide-label { font-weight: bold; text-transform: uppercase; color: #6c757d; margin-bottom: 20px; font-size: 18px; letter-spacing: 1px; }
+ .callout { padding: 20px 30px; border-radius: 8px; margin: 20px 0; border-left: 8px solid; }
+ .callout.blue { background: #cce5ff; border-color: #004085; color: #004085; }
+ .callout.green { background: #d4edda; border-color: #155724; color: #155724; }
+ .callout.red { background: #f8d7da; border-color: #721c24; color: #721c24; }
+ .callout.yellow { background: #fff3cd; border-color: #856404; color: #856404; }
+ .section-header { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+ .section-num { font-size: 80px; font-weight: bold; color: #e9ecef; margin-bottom: -20px; }
+ .section-header h2 { font-size: 48px; color: #0d6efd; margin-bottom: 20px; }
+ img { max-width: 100%; height: auto; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6; }
+ .comparison-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 20px; }
+ .comparison-table th, .comparison-table td { border: 1px solid #dee2e6; padding: 15px; text-align: left; }
+ .comparison-table th { background-color: #0d6efd; color: white; }
+ .comparison-table tr:nth-child(even) { background-color: #f8f9fa; }
+</style>
+</head>
+<body>
+ <div class="slide-container" id="slides">
+
+ <div class="slide active">
+ <div class="slide-label">Aula 17</div>
+ <h1>Aula 17 - Views, Stored Procedures e Triggers</h1>
+ <p><strong>Descrição:</strong> Compreender Views, Stored Procedures e Triggers é um marco importante na jornada de aprendizado em banco de dados.</p>
+ <p>Esses três recursos transformam o SQL de uma simples linguagem de consulta em uma ferramenta poderosa para encapsular lógica de negócios, garantir segurança e automatizar tarefas diretamente no servidor do banco de dados.</p>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>1. Views (Visões)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. Views (Visões)</div>
+ <h2>O que é?</h2>
+ <p>Uma View é essencialmente uma "tabela virtual". Ela não armazena dados físicos por si só; em vez disso, ela armazena uma instrução SELECT no banco de dados.</p>
+ <p>Toda vez que você consulta uma View, o banco de dados executa a query subjacente e retorna os resultados como se fossem uma tabela real.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. Views (Visões)</div>
+ <h2>A. Por que usar?</h2>
+ <ul>
+ <li><strong>Segurança:</strong> Você pode restringir o acesso a dados sensíveis. Em vez de dar acesso à tabela inteira de Funcionários (que pode ter salários e CPFs), você cria uma View que mostra apenas os nomes e departamentos, e dá acesso apenas à View.</li>
+ <li><strong>Simplicidade:</strong> Permite encapsular queries extremamente complexas (com vários JOINs, agregações e filtros) em um único objeto fácil de consultar.</li>
+ <li><strong>Consistência:</strong> Garante que todos os usuários e aplicações usem a mesma lógica para buscar uma informação específica.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. Views (Visões)</div>
+ <h2>B. Exemplo Prático</h2>
+ <p>Imagine que você tem as tabelas Clientes e Pedidos. Você quer ver frequentemente os clientes que gastaram mais de R$1.000,00 sem ter que reescrever os JOINs toda vez.</p>
+ <h3>Criando a View:</h3>
+ <pre><code>CREATE VIEW v_Clientes_VIP AS
+SELECT
+ c.ID_Cliente,
+ c.Nome,
+ SUM(p.Valor_Total) AS Total_Gasto
+FROM Clientes c
+JOIN Pedidos p ON C.ID_Cliente = p.ID_Cliente
+GROUP BY c.ID_Cliente, c.Nome
+HAVING SUM(p.Valor_Total) > 1000.00;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. Views (Visões)</div>
+ <h3>Usando a View:</h3>
+ <pre><code>-- Agora você pode consultá-la como se fosse uma tabela comum
+SELECT * FROM v_Clientes_VIP WHERE Nome LIKE 'A%';</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. Views (Visões)</div>
+ <h2>C. Explicando o código</h2>
+ <p>Vamos destrinchar esse código linha por linha para entender exatamente o que o banco de dados está fazendo na criação e na utilização dessa View.</p>
+ <h3>Entendendo a Criação da View</h3>
+ <p>O primeiro bloco de código é responsável por definir e salvar a "tabela virtual" no banco de dados.</p>
+ <ul>
+ <li><strong>CREATE VIEW v_Clientes_VIP AS:</strong> Este é o comando que diz ao banco de dados: "Crie um objeto do tipo View e dê a ele o nome de v_Clientes_VIP". O prefixo v_ é uma boa prática de mercado para bater o olho e saber que se trata de uma View e não de uma tabela física. O AS indica que tudo o que vier a seguir será a regra dessa View.</li>
+ <li><strong>SELECT c.ID_Cliente, c.Nome, SUM(p.Valor_Total) AS Total_Gasto:</strong> Aqui definimos quais colunas farão parte da View. Estamos pegando o ID e o Nome do cliente. A parte SUM(p.Valor_Total) soma os valores de todos os pedidos daquele cliente. O AS Total_Gasto apenas renomeia essa coluna calculada para que ela tenha um nome amigável quando consultarmos a View.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. Views (Visões)</div>
+ <h3>Entendendo a Criação da View (Continuação)</h3>
+ <ul>
+ <li><strong>FROM Clientes c:</strong> Indica a tabela principal de onde estamos puxando os dados. A letra c é um alias (apelido). Em vez de digitar Clientes. Nome o tempo todo, podemos digitar apenas c.Nome.</li>
+ <li><strong>JOIN Pedidos p ON c.ID_Cliente = p.ID_Cliente:</strong> Esta linha cruza os dados da tabela de Clientes com a tabela de Pedidos (apelidada de p). O ON define a regra do cruzamento: o banco de dados vai alinhar as linhas onde o ID_Cliente da tabela Clientes for exatamente igual ao ID_Cliente da tabela Pedidos.</li>
+ <li><strong>GROUP BY c.ID_Cliente, c.Nome:</strong> Como usamos a função de soma (SUM) lá no SELECT, precisamos agrupar os dados. O GROUP BY diz ao banco: "Some os valores dos pedidos, mas crie um subtotal para cada cliente (baseado no ID e no Nome)". Se um cliente tem 5 pedidos, o banco vai juntar os 5 em uma única linha e apresentar o valor total.</li>
+ <li><strong>HAVING SUM(p. Valor_Total) > 1000.00;:</strong> O HAVING funciona como um WHERE, mas é exclusivo para dados agrupados e funções matemáticas (como SUM, COUNT, AVG). Aqui, estamos dizendo: "Depois de somar tudo, descarte os clientes cujo total não ultrapasse R$ 1.000,00". Apenas os que gastaram mais que isso entram na View.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">1. Views (Visões)</div>
+ <h3>Entendendo o Uso da View</h3>
+ <p>O segundo bloco mostra como a sua vida fica mais fácil após a criação da View.</p>
+ <ul>
+ <li><strong>SELECT * FROM v_Clientes_VIP:</strong> Em vez de escrever todo aquele bloco complexo de JOIN, GROUP BY e SUM, você faz um SELECT simples e direto. O banco de dados vai nos bastidores e executa a lógica que você salvou.</li>
+ <li><strong>WHERE Nome LIKE 'A%';:</strong> Como a View se comporta como uma tabela normal, você pode aplicar filtros adicionais nela. O comando LIKE 'A%' filtra o resultado final para mostrar apenas os clientes VIP cujo nome comece com a letra A. O símbolo % significa "qualquer texto que venha depois da letra A".</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>2. Stored Procedures (Procedimentos Armazenados)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. Stored Procedures</div>
+ <h2>O que é?</h2>
+ <p>Um Stored Procedure é um bloco de código SQL (que pode incluir lógica de programação como IF/ELSE, loops e tratamento de erros) que é salvo no banco de dados para ser reutilizado.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. Stored Procedures</div>
+ <h2>A. Por que usar?</h2>
+ <ul>
+ <li><strong>Reutilização e Manutenção:</strong> A lógica fica no banco de dados. Se a regra de negócio mudar, você altera apenas a Procedure, e todas as aplicações (web, mobile, desktop) que a consomem passam a usar a regra nova instantaneamente.</li>
+ <li><strong>Desempenho:</strong> As Procedures são pré-compiladas pelo banco de dados, o que pode reduzir o tempo de execução. Além disso, reduzem o tráfego de rede, pois você envia apenas a chamada da Procedure, e não centenas de linhas de código SQL.</li>
+ <li><strong>Segurança:</strong> Previne ataques de Injeção de SQL e permite que usuários executem operações complexas sem ter permissões diretas nas tabelas subjacentes (apenas permissão para executar a Procedure).</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. Stored Procedures</div>
+ <h2>B. Exemplo Prático</h2>
+ <p>Vamos criar uma Procedure para inserir um novo pedido, que aceita parâmetros de entrada.</p>
+ <h3>Criando a Procedure (Sintaxe estilo MySQL):</h3>
+ <pre><code>DELIMITER //
+CREATE PROCEDURE sp_InserirNovoPedido (
+ IN P_ID_Cliente INT,
+ IN p_Valor DECIMAL(10,2)
+)
+BEGIN
+ -- Lógica para inserir o pedido
+ INSERT INTO Pedidos (ID_Cliente, Data_Pedido, Valor_Total)
+ VALUES (p_ID_Cliente, CURRENT_DATE, p_Valor);
+
+ -- Retornar uma mensagem de sucesso
+ SELECT 'Pedido inserido com sucesso!' AS Mensagem;
+END //
+DELIMITER ;</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. Stored Procedures</div>
+ <h3>Executando a Procedure:</h3>
+ <pre><code>CALL sp_Inserir Novo Pedido (15, 250.50);</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. Stored Procedures</div>
+ <h2>C. Explicando o código</h2>
+ <p>Vamos destrinchar agora o código da Stored Procedure. Como ela envolve lógica de programação (parâmetros, início e fim de blocos), a sintaxe tem alguns detalhes bem interessantes.</p>
+ <h3>Entendendo a Criação da Procedure</h3>
+ <ul>
+ <li><strong>DELIMITER //:</strong> Por padrão, o banco de dados usa o ponto e vírgula (;) para saber que uma instrução SQL terminou e deve ser executada. Porém, a nossa Procedure terá vários pontos e vírgulas dentro dela. Se deixássemos o padrão, o banco tentaria executar a Procedure pela metade assim que achasse o primeiro;. O DELIMITER // diz ao banco: "Ei, temporariamente, mude o sinal de término de para II".</li>
+ <li><strong>CREATE PROCEDURE sp_InserirNovoPedido (:</strong> Aqui começamos a criar o objeto. sp_ é o prefixo recomendado para Stored Procedure. Abrimos parênteses para definir o que ela vai receber de fora.</li>
+ <li><strong>IN p_ID_Cliente INT, IN p_Valor DECIMAL(10,2):</strong> Estes são os parâmetros de entrada (variáveis que a Procedure precisa para trabalhar):<br>
+ - IN: Indica que é um parâmetro que entra na Procedure.<br>
+ - p_ID_Cliente e p_Valor: São os nomes das variáveis. Usar o prefixo p_ é uma ótima prática para você não confundir o nome do parâmetro com o nome das colunas da tabela.<br>
+ - INT e DECIMAL(10,2): São os tipos de dados que essas variáveis aceitam (um número inteiro e um número decimal com duas casas decimais, respectivamente).</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. Stored Procedures</div>
+ <h3>Entendendo a Criação da Procedure (Continuação)</h3>
+ <ul>
+ <li><strong>) BEGIN:</strong> Fechamos os parâmetros e usamos o BEGIN para indicar: "Aqui começa o bloco de código que será executado".</li>
+ <li><strong>INSERT INTO Pedidos (ID_Cliente, Data_Pedido, Valor_Total) VALUES (p_ID_Cliente, CURRENT_DATE, p_Valor);:</strong> Esta é a ação que a Procedure faz. Ela insere uma linha na tabela Pedidos. Note que ela joga o p_ID_Cliente (que você passou) na coluna ID_Cliente, usa uma função do próprio banco (CURRENT_DATE) para preencher a data de hoje automaticamente, e joga o p_Valor na coluna Valor Total.</li>
+ <li><strong>SELECT 'Pedido inserido com sucesso!' AS Mensagem;:</strong> Uma Procedure pode retornar dados. Aqui, usamos um SELECT simples com um texto fixo para que, assim que a inserção termine, a aplicação ou o usuário receba uma confirmação visual na tela de que tudo deu certo.</li>
+ <li><strong>END //:</strong> O END fecha o bloco de código da Procedure. Lembra que mudamos o delimitador lá no início? Usamos o // aqui para avisar ao banco que a Procedure acabou de ser escrita por completo e já pode ser salva/compilada.</li>
+ <li><strong>DELIMITER;:</strong> Por fim, essa linha devolve o comportamento do banco ao normal, definindo o ponto e vírgula (;) novamente como o finalizador padrão de comandos.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">2. Stored Procedures</div>
+ <h3>Entendendo a Execução da Procedure</h3>
+ <p>Depois que ela está salva no banco, executá-la é muito simples:</p>
+ <ul>
+ <li><strong>CALL sp_Inserir NovoPedido (15, 250.50);:</strong> O comando CALL (chamar) ativa a Procedure. Entre parênteses, passamos os valores na mesma ordem em que os parâmetros foram criados:</li>
+ <ul>
+ <li>O número 15 é enviado para o p_ID_Cliente.</li>
+ <li>O valor 250.50 é enviado para o p_Valor.</li>
+ </ul>
+ </ul>
+ <p>O banco processa tudo silenciosamente e devolve na tela a tabela com a mensagem: "Pedido inserido com sucesso!".</p>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>3. Triggers (Gatilhos)</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Triggers</div>
+ <h2>O que é?</h2>
+ <p>Um Trigger é um tipo especial de Stored Procedure que não é chamado manualmente. Em vez disso, ele é "disparado" (executado) automaticamente pelo banco de dados quando um evento específico ocorre em uma tabela.</p>
+ <p>Esses eventos são as operações de modificação de dados: INSERT, UPDATE ou DELETE.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Triggers</div>
+ <h2>A. Por que usar?</h2>
+ <ul>
+ <li><strong>Auditoria:</strong> Registrar quem alterou um registro e quando.</li>
+ <li><strong>Integridade de Dados e Regras de Negócio Automáticas:</strong> Por exemplo, deduzir o estoque de um produto automaticamente assim que uma venda é registrada.</li>
+ <li><strong>Sincronização:</strong> Atualizar tabelas relacionadas que não possuem regras de chave estrangeira com cascata.</li>
+ </ul>
+ <div class="callout yellow">
+ <p><strong>Atenção:</strong> Triggers devem ser usados com cuidado. Como são invisíveis para a aplicação (rodam em background no banco), Triggers em excesso ou mal escritos podem causar problemas de performance e "efeitos colaterais" difíceis de debugar.</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Triggers</div>
+ <h2>B. Como aplicar (Exemplo Prático)</h2>
+ <p>Vamos criar um gatilho que registra automaticamente uma entrada de auditoria toda vez que o salário de um funcionário for atualizado.</p>
+ <h3>Criando a Tabela de Auditoria:</h3>
+ <pre><code>CREATE TABLE Auditoria_Salario (
+ ID_Auditoria INT AUTO_INCREMENT PRIMARY KEY,
+ ID_Funcionario INT,
+ Salario_Antigo DECIMAL(10,2),
+ Salario_Novo DECIMAL(10,2),
+ Data_Alteracao DATETIME
+);</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Triggers</div>
+ <h3>Criando o Trigger (Sintaxe estilo MySQL):</h3>
+ <pre><code>DELIMITER //
+CREATE TRIGGER trg_AposAtualizar Salario
+AFTER UPDATE ON Funcionarios -- Dispara DEPOIS de um UPDATE na tabela Funcionarios
+FOR EACH ROW -- Executa para cada linha afetada
+BEGIN
+ -- Verifica se o salário realmente mudou
+ IF OLD.Salario <> NEW.Salario THEN
+ INSERT INTO Auditoria_Salario (ID_Funcionario, Salario_Antigo, Salario_Novo, Data_Alteracao)
+ VALUES (NEW.ID_Funcionario, OLD.Salario, NEW.Salario, NOW());
+ END IF;
+END //
+DELIMITER ;</code></pre>
+ <p><strong>Nota:</strong> OLD refere-se aos dados antes da atualização, e NEW refere-se aos dados após a atualização.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Triggers</div>
+ <h2>C. Explicando o código</h2>
+ <p>Para fechar vamos destrinchar como o Trigger e a tabela de auditoria funcionam em conjunto. O conceito do Trigger pode parecer "mágico" porque você não o vê executando na aplicação, mas o código revela exatamente como ele age nos bastidores.</p>
+ <h3>1. Entendendo a Tabela de Auditoria</h3>
+ <p>Antes do Trigger funcionar, ele precisa de um lugar para guardar as informações. Por isso criamos a tabela Auditoria_Salario.</p>
+ <ul>
+ <li><strong>CREATE TABLE Auditoria_Salario (:</strong> Comando padrão para criar uma nova tabela no banco de dados.</li>
+ <li><strong>ID_Auditoria INT AUTO_INCREMENT PRIMARY KEY,:</strong> Esta é a chave principal da tabela de auditoria. O AUTO_INCREMENT garante que o próprio banco de dados vai gerar os números sequenciais (1, 2, 3...) toda vez que um novo registro entrar. Você não precisa se preocupar em preencher isso.</li>
+ <li><strong>ID_Funcionario INT,:</strong> Guarda qual funcionário teve o salário alterado.</li>
+ <li><strong>Salario_Antigo DECIMAL(10,2), e Salario_Novo DECIMAL(10,2),:</strong> As duas colunas cruciais da auditoria: vão armazenar o "antes" e o "depois" da mudança.</li>
+ <li><strong>Data_Alteracao DATETIME:</strong> Guarda a data e a hora exatas em que a modificação ocorreu. O fechamento com ); conclui a criação da tabela.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Triggers</div>
+ <h3>2. Entendendo a Criação do Trigger</h3>
+ <p>Aqui é onde a automação acontece. O código define a "armadilha" que vai disparar a auditoria.</p>
+ <ul>
+ <li><strong>DELIMITER // e (no final) DELIMITER;:</strong> Assim como na Stored Procedure, usamos isso para trocar o delimitador padrão ( ) por //, permitindo que o bloco do Trigger tenha vários pontos e vírgulas dentro dele sem ser interrompido precocemente.</li>
+ <li><strong>CREATE TRIGGER trg_AposAtualizarSalario:</strong> Cria o objeto do tipo Trigger. O prefixo trg é a convenção recomendada, seguido de um nome descritivo.</li>
+ <li><strong>AFTER UPDATE ON Funcionarios:</strong> Esta linha é o "coração" do Trigger. Ela diz exatamente quando e onde ele deve agir:
+ <ul>
+ <li><strong>AFTER:</strong> Dispara depois que a alteração for salva. (Poderia ser BEFORE para validar dados antes de salvar).</li>
+ <li><strong>UPDATE:</strong> Só reage ao comando de atualização. Se alguém inserir (INSERT) ou deletar (DELETE) um funcionário, este Trigger fica quieto.</li>
+ <li><strong>ON Funcionarios:</strong> É a tabela que está sendo "vigiada".</li>
+ </ul>
+ </li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Triggers</div>
+ <h3>2. Entendendo a Criação do Trigger (Continuação)</h3>
+ <ul>
+ <li><strong>FOR EACH ROW:</strong> Instrução fundamental. Ela diz ao banco: "Se um comando UPDATE alterar o salário de 50 funcionários de uma vez, execute este Trigger 50 vezes (uma para cada linha afetada)".</li>
+ <li><strong>BEGIN:</strong> Inicia a lógica de programação do que o Trigger vai fazer.</li>
+ <li><strong>IF OLD.Salario <> NEW.Salario THEN:</strong> Esta é uma proteção excelente. Imagine que alguém faça um UPDATE no endereço do funcionário. Ο Trigger vai disparar (pois houve um UPDATE na tabela), mas o salário não mudou. Aqui, o banco compara o pseudo-registro OLD (dados como estavam no banco antes do update) com o NEW (dados que o usuário enviou no update). O símbolo <> significa "diferente". A lógica é: "Se o salário antigo for diferente do salário novo, então continue".</li>
+ <li><strong>INSERT INTO Auditoria_Salario (ID_Funcionario, Salario_Antigo, Salario_Novo, Data_Alteracao):</strong> Se o IF anterior for verdadeiro, o Trigger insere uma nova linha na nossa tabela de auditoria.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">3. Triggers</div>
+ <h3>2. Entendendo a Criação do Trigger (Continuação)</h3>
+ <ul>
+ <li><strong>VALUES (NEW.ID_Funcionario, OLD.Salario, NEW.Salario, NOW());:</strong> Aqui extraímos as informações dos pseudo-registros e salvamos:
+ <ul>
+ <li>Pegamos o ID do funcionário usando o NEW.ID_Funcionario.</li>
+ <li>Gravamos o "antes" usando OLD.Salario.</li>
+ <li>Gravamos o "depois" usando NEW.Salario.</li>
+ <li>A função NOW() pega a data e hora do sistema do servidor naquele exato segundo.</li>
+ </ul>
+ </li>
+ <li><strong>END IF; e END //:</strong> O END IF; fecha a condição do salário. O END // fecha todo o bloco do Trigger para que o banco possa compilá-lo.</li>
+ </ul>
+ <p>Com isso no lugar, se alguém executar no sistema um <code>UPDATE Funcionarios SET Salario = 5000 WHERE ID = 10;</code>, o banco faz o update na tabela principal e, uma fração de segundo depois, o Trigger automaticamente registra o histórico completo sem que o usuário sequer perceba.</p>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>Fechamento: Elevando o Nível do seu SQL</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Encerramento</div>
+ <h2>Recapitulando os pontos principais de hoje:</h2>
+ <ul>
+ <li><strong>Views:</strong> Atuam como "tabelas virtuais" baseadas em consultas salvas. Elas são a escolha certa para simplificar leituras e garantir a segurança, restringindo o acesso apenas aos dados necessários.</li>
+ <li><strong>Stored Procedures:</strong> São blocos de código SQL salvos que podem ser executados manualmente. Elas brilham na centralização de lógicas de negócio complexas e rotinas, garantindo fácil manutenção e reutilização por diversas aplicações.</li>
+ <li><strong>Triggers:</strong> São executados de forma totalmente automática sempre que ocorre um evento de modificação (como INSERT, UPDATE ou DELETE). São essenciais para processos de auditoria e automação de regras implícitas nos bastidores.</li>
+ </ul>
+ <p>Com essas três ferramentas, você agora tem a capacidade de construir arquiteturas de banco de dados muito mais robustas, eficientes e seguras!</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Encerramento</div>
+ <h2>Resumo Comparativo</h2>
+ <table class="comparison-table">
+ <thead>
+ <tr>
+ <th>Característica</th>
+ <th>View</th>
+ <th>Stored Procedure</th>
+ <th>Trigger</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td><strong>O que é?</strong></td>
+ <td>Consulta SQL salva (Tabela Virtual).</td>
+ <td>Bloco de código SQL salvo.</td>
+ <td>Bloco de código ativado por eventos.</td>
+ </tr>
+ <tr>
+ <td><strong>Execução</strong></td>
+ <td>Manual (usando SELECT).</td>
+ <td>Manual (usando CALL ou EXEC).</td>
+ <td>Automática (INSERT, UPDATE, DELETE).</td>
+ </tr>
+ <tr>
+ <td><strong>Aceita Parâmetros?</strong></td>
+ <td>Não.</td>
+ <td>Sim (Entrada e Saída).</td>
+ <td>Não.</td>
+ </tr>
+ <tr>
+ <td><strong>Uso Principal</strong></td>
+ <td>Simplificar consultas e segurança de leitura.</td>
+ <td>Lógica de negócios complexa e rotinas.</td>
+ <td>Auditoria e automação de regras implícitas.</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+
+ </div>
+
+ <div class="controls">
+ <button id="prevBtn" onclick="prevSlide()" disabled>Anterior</button>
+ <div class="progress"><span id="current">1</span> / <span id="total"></span></div>
+ <button id="nextBtn" onclick="nextSlide()">Próximo</button>
+ </div>
+
+ <script>
+ let currentSlideIndex = 0;
+ const slides = document.querySelectorAll('.slide');
+ const totalSlides = slides.length;
+ const currentIndicator = document.getElementById('current');
+ const totalIndicator = document.getElementById('total');
+ const prevBtn = document.getElementById('prevBtn');
+ const nextBtn = document.getElementById('nextBtn');
+
+ totalIndicator.textContent = totalSlides;
+
+ function updateView() {
+ slides.forEach((slide, index) => {
+ slide.classList.remove('active');
+ if (index === currentSlideIndex) {
+ slide.classList.add('active');
+ }
+ });
+ currentIndicator.textContent = currentSlideIndex + 1;
+ 
+ prevBtn.disabled = currentSlideIndex === 0;
+ nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+ }
+
+ function nextSlide() {
+ if (currentSlideIndex < totalSlides - 1) {
+ currentSlideIndex++;
+ updateView();
+ }
+ }
+
+ function prevSlide() {
+ if (currentSlideIndex > 0) {
+ currentSlideIndex--;
+ updateView();
+ }
+ }
+
+ document.addEventListener('keydown', (e) => {
+ if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+ if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+ });
+ </script>
+</body>
+</html>
