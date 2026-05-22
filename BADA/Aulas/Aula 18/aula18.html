@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 18 - Backup e Recuperação de Banco de Dados</title>
+<style>
+ body {
+ margin: 0; 
+ padding: 0; 
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: #f8f9fa; 
+ color: #212529;
+ display: flex; 
+ flex-direction: column; 
+ height: 100vh;
+ overflow: hidden;
+ }
+ .slide-container {
+ width: 95vw;
+ height: 85vh;
+ margin: auto;
+ display: flex; 
+ align-items: center; 
+ justify-content: center;
+ padding: 20px; 
+ box-sizing: border-box; 
+ position: relative;
+ }
+ .slide {
+ display: none; 
+ width: 100%; 
+ max-width: 1200px; 
+ height: 80vh;
+ background: #ffffff; 
+ border-radius: 12px;
+ box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+ padding: 50px;
+ font-size: 24px; 
+ line-height: 1.5; 
+ overflow-y: auto;
+ }
+ .slide.active { 
+ display: block; 
+ animation: fadeIn 0.4s ease-in-out;
+ }
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ h1, h2, h3, h4 { 
+ color: #0d6efd; 
+ margin-top: 0; 
+ }
+ code, pre { 
+ background: #e9ecef; 
+ padding: 10px 15px; 
+ border-radius: 8px; 
+ font-family: 'Courier New', Courier, monospace; 
+ display: block; 
+ font-size: 20px;
+ overflow-x: auto;
+ white-space: pre-wrap;
+ }
+ .controls {
+ height: 80px; 
+ background: #ffffff; 
+ border-top: 1px solid #dee2e6;
+ display: flex; 
+ justify-content: space-between; 
+ align-items: center; 
+ padding: 0 50px;
+ }
+ button {
+ background: #0d6efd; 
+ color: white; 
+ border: none; 
+ padding: 12px 25px;
+ font-size: 18px; 
+ border-radius: 8px; 
+ cursor: pointer;
+ transition: background 0.2s;
+ }
+ button:hover {
+ background: #0b5ed7;
+ }
+ button:disabled { 
+ background: #adb5bd; 
+ cursor: not-allowed; 
+ }
+ .progress { 
+ font-size: 20px; 
+ font-weight: bold; 
+ color: #495057;
+ }
+ .slide-label { font-weight: bold; text-transform: uppercase; color: #6c757d; margin-bottom: 20px; font-size: 18px; letter-spacing: 1px; }
+ .callout { padding: 20px 30px; border-radius: 8px; margin: 20px 0; border-left: 8px solid; }
+ .callout.blue { background: #cce5ff; border-color: #004085; color: #004085; }
+ .callout.green { background: #d4edda; border-color: #155724; color: #155724; }
+ .callout.red { background: #f8d7da; border-color: #721c24; color: #721c24; }
+ .callout.yellow { background: #fff3cd; border-color: #856404; color: #856404; }
+ .section-header { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+ .section-num { font-size: 80px; font-weight: bold; color: #e9ecef; margin-bottom: -20px; }
+ .section-header h2 { font-size: 48px; color: #0d6efd; margin-bottom: 20px; }
+ img { max-width: 100%; height: auto; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6; }
+ table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 20px; }
+ th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
+ th { background-color: #e9ecef; color: #0d6efd; }
+</style>
+</head>
+<body>
+ <div class="slide-container" id="slides">
+
+ <div class="slide active">
+ <div class="slide-label">Aula 18</div>
+ <h1>Aula 18 - Backup e Recuperação de Banco de Dados</h1>
+ <p><strong>Descrição:</strong> Esta aula aborda estratégias essenciais de backup e recuperação de banco de dados, com foco em cópias completas e incrementais.</p>
+ <p>O aluno aprenderá, na prática, a executar e documentar rotinas vitais para a segurança da informação.</p>
+ </div>
+
+ <div class="slide">
+ <h2>1. Introdução</h2>
+ <p>O backup (cópia de segurança) e a recuperação (restore) formam a espinha dorsal de qualquer estratégia de segurança de dados.</p>
+ <p>Sem um plano de backup eficiente, uma organização está vulnerável a falhas de hardware, erros humanos, corrupção de dados e ataques cibernéticos (como ransomware).</p>
+ <p>O objetivo principal desta aula é entender como executar e, tão importante quanto, documentar esses processos.</p>
+ </div>
+
+ <div class="slide">
+ <h2>2. Conceitos: Backup Completo vs. Incremental</h2>
+ <p>Para garantir a eficiência e economizar espaço de armazenamento, as estratégias de backup geralmente combinam diferentes abordagens.</p>
+ 
+ <h3>Backup Completo (Full):</h3>
+ <ul>
+ <li><strong>O que é:</strong> Uma cópia inteira e exata de todo o banco de dados em um determinado momento.</li>
+ <li><strong>Vantagens:</strong> A recuperação é mais simples e rápida, pois você só precisa de um único arquivo de backup para restaurar tudo.</li>
+ <li><strong>Desvantagens:</strong> Exige muito espaço de armazenamento e demora muito tempo para ser executado, o que inviabiliza sua execução contínua durante o horário de pico.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <h2>2. Conceitos: Backup Completo vs. Incremental (Continuação)</h2>
+ <h3>Backup Incremental:</h3>
+ <ul>
+ <li><strong>O que é:</strong> Copia apenas os dados que foram alterados ou adicionados desde o último backup (seja ele completo ou outro incremental).</li>
+ <li><strong>Vantagens:</strong> Muito rápido de ser feito e consome pouquíssimo espaço de armazenamento.</li>
+ <li><strong>Desvantagens:</strong> A recuperação é mais lenta e complexa. Se o banco falhar, você precisará restaurar primeiro o último Backup Completo e, em seguida, aplicar todos os backups incrementais na ordem exata em que foram feitos.</li>
+ </ul>
+ <div class="callout blue">
+ <p><strong>Nota:</strong> Uma rotina comum no mercado é realizar um Backup Completo no final de semana (ex: domingo de madrugada) e Backups Incrementais diários (ex: segunda a sábado).</p>
+ </div>
+ </div>
+
+ <div class="slide">
+ <h2>3. Prática: Executando Backups (Exemplo em MySQL)</h2>
+ <p>Abaixo, veremos como esses conceitos funcionam na prática utilizando ferramentas de linha de comando.</p>
+ 
+ <h3>3.1. Executando o Backup Completo</h3>
+ <p>O utilitário padrão para backups lógicos no MySQL é o mysqldump.</p>
+ <p>O mysqldump é um utilitário de linha de comando oficial para criar backups lógicos (arquivos .sql) de bancos de dados MySQL.</p>
+ <p>Ele gera os comandos CREATE TABLE e INSERT para recriar seus dados, tabelas ou o banco completo. Deve ser executado no terminal do sistema operacional (CMD no Windows ou Shell no Linux), e não dentro do prompt do MySQL.</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Prática: Backup Completo</div>
+ <h3>Comando de Backup:</h3>
+ <p>Bash</p>
+ <pre><code># Fazendo o backup completo do banco "sistema_vendas"
+mysqldump -u root -p sistema_vendas > /backups/full/vendas_full_20260521.sql</code></pre>
+
+ <h3>Comando de Restauração (Restore):</h3>
+ <p>Bash</p>
+ <pre><code># Restaurando o banco a partir do arquivo.sql
+mysql -u root -p sistema_vendas < /backups/full/vendas_full_20260521.sql</code></pre>
+ </div>
+
+ <div class="slide">
+ <h2>3.2. Executando o Backup Incremental</h2>
+ <p>No MySQL, os backups incrementais são feitos através dos Logs Binários (Binary Logs / binlog).</p>
+ <p>Eles registram todas as instruções que alteram dados no banco.</p>
+
+ <h3>Passo 1: Garantir que o log binário está ativado (no arquivo my.cnf ou my.ini).</h3>
+ <p>No Windows o arquivo costuma estar:</p>
+ <ul>
+ <li>C:\ProgramData\MySQL\MySQL Server X.X\my.ini (pasta oculta)</li>
+ <li>Ou na pasta de instalação em C:\Program Files\MySQL\...</li>
+ </ul>
+ <p>TXT</p>
+ <pre><code>[mysqld]
+log-bin=/var/log/mysql/mysql-bin.log</code></pre>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Prática: Backup Incremental</div>
+ <h3>Passo 2: Gerar o backup incremental (rotacionar o log)</h3>
+ <p>Ao rodar o comando abaixo, o banco de dados fecha o arquivo de log atual (que servirá como seu backup incremental) e abre um novo para continuar gravando.</p>
+ <p>Bash</p>
+ <pre><code>mysqladmin -u root -p flush-logs</code></pre>
+ <p>O arquivo gerado (ex: mysql-bin.000001) deve ser copiado para um local seguro. Ele é o seu backup incremental.</p>
+ 
+ <h3>Restauração do Incremental:</h3>
+ <p>Bash</p>
+ <pre><code># Aplicando o log binário no banco de dados após restaurar o Full Backup
+mysqlbinlog /backups/incremental/mysql-bin.000001 | mysql -u root -p sistema_vendas</code></pre>
+ </div>
+
+ <div class="slide">
+ <h2>4. Documentação do Processo de Backup (Checklist de Execução)</h2>
+ <p>A documentação é vital. De nada adianta ter o backup se, durante uma crise, o DBA (Administrador de Banco de Dados) não souber onde os arquivos estão ou qual a ordem de restauração.</p>
+ <p>Abaixo está um modelo de Relatório de Execução de Backup, que os alunos devem preencher após realizarem a prática:</p>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Documentação</div>
+ <h3>Ficha de Registro de Backup</h3>
+ <table>
+ <tr>
+ <th>Campo</th>
+ <th>Descrição / Preenchimento do Aluno</th>
+ </tr>
+ <tr>
+ <td>Data e Hora de Início</td>
+ <td>Ex: 21/05/2026 às 02:00</td>
+ </tr>
+ <tr>
+ <td>Data e Hora de Término</td>
+ <td>Ex: 21/05/2026 às 02:45</td>
+ </tr>
+ <tr>
+ <td>Servidor / Banco Alvo</td>
+ <td>Ex: Servidor Produção 01 / Banco: sistema_vendas</td>
+ </tr>
+ <tr>
+ <td>Tipo de Backup</td>
+ <td>[ ] Completo (Full) ( ) Incremental</td>
+ </tr>
+ <tr>
+ <td>Ferramenta Utilizada</td>
+ <td>Ex: mysqldump versão 8.0</td>
+ </tr>
+ <tr>
+ <td>Nome/Caminho do Arquivo</td>
+ <td>Ex: /storage/backups/full/vendas_full_20260521.sql</td>
+ </tr>
+ <tr>
+ <td>Tamanho do Arquivo</td>
+ <td>Ex: 4.2 GB</td>
+ </tr>
+ <tr>
+ <td>Status da Operação</td>
+ <td>[ ] Sucesso [ ] Falha [ ] Sucesso com Alertas</td>
+ </tr>
+ <tr>
+ <td>Hash de Validação (MD5/SHA)</td>
+ <td>(Opcional, mas recomendado para garantir a integridade do arquivo)</td>
+ </tr>
+ <tr>
+ <td>Responsável pela Execução</td>
+ <td>Nome do Administrador/Aluno</td>
+ </tr>
+ </table>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Documentação</div>
+ <h3>Procedimento Passo-a-Passo Documentado (POP - Procedimento Operacional Padrão)</h3>
+ <p>Todo ambiente de banco de dados deve ter um documento detalhando as ações:</p>
+ <ol>
+ <li><strong>Objetivo:</strong> Garantir a cópia diária dos dados de vendas.</li>
+ <li><strong>Pré-requisitos:</strong> Espaço em disco verificado no servidor de storage; credenciais de root do banco disponíveis no cofre de senhas.</li>
+ <li><strong>Passo a Passo de Restauração em Caso de Falha:</strong>
+ <ul>
+ <li>Ação 1: Interromper a aplicação que conecta ao banco.</li>
+ <li>Ação 2: Restaurar o último backup Completo (/backups/full/ultimo.sql).</li>
+ <li>Ação 3: Aplicar em ordem sequencial os arquivos de log binário (mysql-bin.X até mysql-bin.Y).</li>
+ <li>Ação 4: Validar a consistência (ex: contar total de registros na tabela principal).</li>
+ <li>Ação 5: Liberar o acesso da aplicação.</li>
+ </ul>
+ </li>
+ </ol>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>5. Exercício Prático para a Aula</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Exercício Prático</div>
+ <h2>Desafio aos alunos:</h2>
+ <ol>
+ <li>Crie um banco de dados de teste chamado aula_backup com uma tabela clientes e insira 3 registros.</li>
+ <li>Execute um Backup Completo usando mysqldump.</li>
+ <li>Insira mais 2 registros na tabela (simulando atividade ao longo do dia).</li>
+ <li>Faça o fluxo de logs (flush-logs) e copie o log binário gerado para uma pasta de backup, caracterizando um Backup Incremental.</li>
+ </ol>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Exercício Prático</div>
+ <h2>Desafio aos alunos (Continuação):</h2>
+ <ol start="5">
+ <li>Simule um desastre: dê um comando DROP DATABASE aula_backup;.</li>
+ <li>Recupere o ambiente: restaure primeiro o backup completo, valide se há 3 registros, e depois aplique o backup incremental para recuperar os últimos 2 registros.</li>
+ <li>Preencha a Ficha de Registro de Backup documentando os passos que você realizou.</li>
+ </ol>
+ </div>
+
+ <div class="slide">
+ <div class="section-header">
+ <h2>Resumo de Fechamento</h2>
+ </div>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Resumo</div>
+ <h2>Resumo de Fechamento</h2>
+ <p>Para consolidarmos o que aprendemos hoje, vamos recapitular os grandes pilares do processo de backup e recuperação:</p>
+ <ul>
+ <li><strong>A Importância da Prevenção:</strong> Entendemos que, sem um plano de backup eficiente, toda a organização fica vulnerável a imprevistos críticos, como falhas de hardware, erros operacionais ou ataques cibernéticos do tipo ransomware.</li>
+ <li><strong>Estratégia Combinada (Completo vs. Incremental):</strong> Vimos que a melhor prática do mercado é combinar diferentes abordagens.</li>
+ <li>O Backup Completo traz segurança e facilidade na restauração, sendo ideal para finais de semana.</li>
+ </ul>
+ </div>
+
+ <div class="slide">
+ <div class="slide-label">Resumo</div>
+ <h2>Resumo de Fechamento (Continuação)</h2>
+ <ul>
+ <li>Já o Backup Incremental garante velocidade no dia a dia, economizando armazenamento ao salvar apenas as alterações recentes.</li>
+ <li><strong>Prática no MySQL:</strong> Colocamos a mão na massa utilizando ferramentas nativas de linha de comando. Usamos o utilitário mysqldump para gerar o arquivo de backup lógico completo e rotacionamos os Logs Binários para criar nossos backups incrementais.</li>
+ <li><strong>Documentação é Sobrevivência:</strong> Aprendemos que a documentação é uma etapa vital. Durante um desastre, o Administrador de Banco de Dados (DBA) precisa de um Procedimento Operacional Padrão (POP) claro para saber exatamente onde buscar os arquivos e a ordem exata de restauração.</li>
+ <li><strong>Testando a Recuperação:</strong> O exercício prático provou que a teoria funciona. Simulamos uma queda severa do banco e conseguimos recuperar os dados mesclando o mysqldump e os logs binários, documentando tudo na nossa Ficha de Registro de Backup.</li>
+ </ul>
+ </div>
+
+ </div>
+
+ <div class="controls">
+ <button id="prevBtn" onclick="prevSlide()" disabled>Anterior</button>
+ <div class="progress"><span id="current">1</span> / <span id="total"></span></div>
+ <button id="nextBtn" onclick="nextSlide()">Próximo</button>
+ </div>
+
+ <script>
+ let currentSlideIndex = 0;
+ const slides = document.querySelectorAll('.slide');
+ const totalSlides = slides.length;
+ const currentIndicator = document.getElementById('current');
+ const totalIndicator = document.getElementById('total');
+ const prevBtn = document.getElementById('prevBtn');
+ const nextBtn = document.getElementById('nextBtn');
+
+ totalIndicator.textContent = totalSlides;
+
+ function updateView() {
+ slides.forEach((slide, index) => {
+ slide.classList.remove('active');
+ if (index === currentSlideIndex) {
+ slide.classList.add('active');
+ }
+ });
+ currentIndicator.textContent = currentSlideIndex + 1;
+ 
+ prevBtn.disabled = currentSlideIndex === 0;
+ nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+ }
+
+ function nextSlide() {
+ if (currentSlideIndex < totalSlides - 1) {
+ currentSlideIndex++;
+ updateView();
+ }
+ }
+
+ function prevSlide() {
+ if (currentSlideIndex > 0) {
+ currentSlideIndex--;
+ updateView();
+ }
+ }
+
+ document.addEventListener('keydown', (e) => {
+ if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+ if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+ });
+ </script>
+</body>
+</html>
